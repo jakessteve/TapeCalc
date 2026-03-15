@@ -1,0 +1,13 @@
+[package]
+name = "hc-tapcalc-core"
+description = "Core data models, tape state, and shared types for HC TapeCalc"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }

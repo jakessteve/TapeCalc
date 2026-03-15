@@ -1,0 +1,31 @@
+﻿cargo :     Checking hc-tapcalc-parser v2.0.0 (C:\Users\He
+oCop\Downloads\Projects\TapeCalc\crates\parser)
+At line:1 char:1
++ cargo check --target wasm32-unknown-unknown 2>&1 | 
+Out-File -Encoding ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (    Checking 
+    hc...\crates\parser):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    Checking hc-tapcalc-graphing v2.0.0 (C:\Users\HeoCop\D
+ownloads\Projects\TapeCalc\crates\graphing)
+    Checking hc-tapcalc-engine-numeric v2.0.0 (C:\Users\He
+oCop\Downloads\Projects\TapeCalc\crates\engine-numeric)
+    Checking wasm-bindings v2.0.0 (C:\Users\HeoCop\Downloa
+ds\Projects\TapeCalc\crates\wasm-bindings)
+warning: method `tape_mut` is never used
+   --> crates\wasm-bindings\src\lib.rs:475:8
+    |
+222 | impl AppState {
+    | ------------- method in this implementation
+...
+475 |     fn tape_mut(&mut self) -> &mut Tape {
+    |        ^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of 
+`#[warn(unused)]`) on by default
+
+warning: `wasm-bindings` (lib) generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] 
+target(s) in 1.26s

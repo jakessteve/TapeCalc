@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+/* ── HC TapeCalc — CSS Module Hub ─────────────────────────────────────────
+ *  Each @import pulls in a focused stylesheet.
+ *  Order matters: tokens → base → layout → features → components.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+@import "./styles/tokens.css";       /* Design tokens, themes, CSS custom properties */
+@import "./styles/base.css";         /* Resets, scrollbar, animations, skip-link, typography */
+@import "./styles/layout.css";       /* Semantic layout: app-shell, panels, surfaces */
+@import "./styles/tape.css";         /* Tape entries, tape background, grand total */
+@import "./styles/calculator.css";   /* Calc buttons, text classes, form controls, toolbar */
+@import "./styles/conversion.css";   /* Unit & currency conversion card, rates grid */
+@import "./styles/components.css";   /* Shared UI: badges, dropdowns, dialogs, settings */
+@import "./styles/solver.css";       /* Expression solver, graph panel, responsive layouts */
+@import "./styles/onboarding.css";   /* First-time user walkthrough overlay */

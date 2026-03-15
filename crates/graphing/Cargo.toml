@@ -1,0 +1,10 @@
+[package]
+name = "hc-tapcalc-graphing"
+description = "Graphing engine — function evaluation for plotting"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+hc-tapcalc-core = { path = "../core" }
+hc-tapcalc-parser = { path = "../parser" }
+thiserror = { workspace = true }

@@ -1,0 +1,284 @@
+﻿/* ── Tape Background ───────────────────────────────────────────────────── */
+
+.tape-dots-bg {
+  background-color: var(--bg-editor);
+  background-image: repeating-linear-gradient(to bottom,
+      transparent,
+      transparent 31px,
+      var(--border-light) 31px,
+      var(--border-light) 32px);
+}
+
+/* ── CalcTape Multi-Line Entry Blocks ─────────────────────────────────── */
+
+.tape-entry-block {
+  cursor: pointer;
+  padding: 6px 0;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border-light);
+  transition: background 0.1s ease;
+}
+
+.tape-entry-block:nth-child(even) {
+  background: var(--bg-tape-band);
+}
+
+/* Force all children inside banded blocks to have no background layering */
+.tape-entry-block:nth-child(even) .tape-entry-row,
+.tape-entry-block:nth-child(even) .tape-entry-row--operand,
+.tape-entry-block:nth-child(even) .tape-entry-row--result,
+.tape-entry-block:nth-child(even) .tape-subtotal-sep {
+  background: transparent;
+}
+
+.tape-entry-block:last-child {
+  border-bottom: none;
+}
+
+.tape-entry-block:hover {
+  background: var(--bg-btn-hover);
+}
+
+.tape-entry-block:hover .tape-action-icons {
+  opacity: 1;
+}
+
+.tape-entry-block--selected {
+  background: var(--bg-active);
+  border-left: 2px solid var(--accent-primary);
+}
+
+/* Operand rows inside a block — compact, no min-height */
+.tape-entry-row--operand {
+  min-height: 26px;
+  padding-top: 1px;
+  padding-bottom: 1px;
+}
+
+/* Result row — slightly bolder */
+.tape-entry-row--result .tape-value {
+  font-weight: 700;
+}
+
+/* ── CalcTape-Style Tape Entries ───────────────────────────────────────── */
+
+.tape-entry-row {
+  display: grid;
+  grid-template-columns: 24px 150px 1fr auto;
+  align-items: baseline;
+  padding: 6px 12px;
+  min-height: 36px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  position: relative;
+}
+
+.tape-entry-row:hover {
+  background: var(--bg-hover);
+}
+
+.tape-entry-row:hover .tape-action-icons {
+  opacity: 1;
+}
+
+.tape-entry-row--selected {
+  background: var(--bg-active);
+  border-left: 2px solid var(--accent-primary);
+  padding-left: 8px;
+}
+
+/* Operator column */
+.tape-op {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  user-select: none;
+  line-height: 1.6;
+}
+
+.tape-op--add {
+  color: var(--fg-secondary);
+}
+
+.tape-op--sub {
+  color: var(--accent-neg);
+}
+
+.tape-op--mul,
+.tape-op--div {
+  color: var(--fg-dim);
+}
+
+/* Value column */
+.tape-value {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  padding-right: 12px;
+  color: var(--fg-primary);
+  line-height: 1.6;
+}
+
+.tape-value--neg {
+  color: var(--accent-neg);
+}
+
+.tape-value--error {
+  color: var(--accent-neg);
+  font-style: italic;
+}
+
+.tape-value--selected {
+  color: var(--accent-primary);
+}
+
+/* Note/label column */
+.tape-note {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--fg-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: none;
+  line-height: 1.6;
+  padding-right: 4px;
+}
+
+/* Auto-generated expression notes (e.g. "856−320") — more subtle than user notes */
+.tape-note--expr {
+  opacity: 0.5;
+  font-style: italic;
+}
+
+/* Clickable note area */
+.tape-note--clickable {
+  cursor: text;
+  border-radius: var(--radius-sm);
+  padding: 1px 6px;
+  transition: background 0.15s ease;
+}
+
+.tape-note--clickable:hover {
+  background: var(--bg-hover);
+}
+
+/* Placeholder — always subtly visible, brighter on hover */
+.tape-note--placeholder {
+  opacity: 0.25;
+  font-style: italic;
+  font-size: 11px;
+  transition: opacity 0.15s ease;
+}
+
+.tape-entry-block:hover .tape-note--placeholder,
+.tape-entry-row:hover .tape-note--placeholder {
+  opacity: 0.5;
+}
+
+/* Inline note text input */
+.tape-note-input {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--fg-primary);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--accent-primary);
+  outline: none;
+  padding: 1px 4px;
+  min-width: 100px;
+  max-width: none;
+  width: 100%;
+  line-height: 1.6;
+}
+
+.tape-note-input::placeholder {
+  color: var(--fg-dim);
+  opacity: 0.5;
+  font-style: italic;
+}
+
+/* Tape tab close button — show on hover */
+button:hover>.tape-tab-close {
+  opacity: 0.6 !important;
+}
+
+button:hover>.tape-tab-close:hover {
+  opacity: 1 !important;
+  color: var(--accent-neg) !important;
+}
+
+/* Hover action icons */
+.tape-action-icons {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+/* Subtotal separator */
+.tape-subtotal-sep {
+  border: none;
+  border-top: 2px double var(--fg-dim);
+  margin: 6px 12px 4px 12px;
+  max-width: 174px;
+  opacity: 0.7;
+}
+
+
+/* ── Tape Entry (first duplicate removed — canonical block at ~L727) ──── */
+
+/* ── Tape Bottom Bar ───────────────────────────────────────────────────── */
+
+.tape-bottom-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 6px 16px;
+  background: var(--bg-panel);
+  color: var(--fg-dim);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-top: 1px solid var(--border-light);
+}
+
+.tape-bottom-bar .autosave-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-success);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* P5-1: Extracted from inline styles */
+.tape-export-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fg-dim);
+  background: none;
+  border: none;
+  text-transform: none;
+}
+
+.tape-export-btn:hover {
+  color: var(--fg-secondary);
+}
+
+/* ── Grand Total (first duplicate removed — canonical block at ~L1307) ── */
+
+.status-bar {
+  background: var(--bg-status);
+  color: var(--fg-dim);
+  border-top: 1px solid var(--border-light);
+}
+

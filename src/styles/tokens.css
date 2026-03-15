@@ -1,0 +1,179 @@
+﻿/* ── Design Tokens ──────────────────────────────────────────────────────── */
+
+:root {
+  /* Stitch Dark Theme (default) — deep navy palette */
+  --bg-base: #0f172a;
+  --bg-panel: #1e293b;
+  --bg-surface: #1e2a3a;
+  --bg-elevated: #2d3748;
+  --bg-editor: #0b1120;
+  --bg-header: #0f172a;
+  --bg-active-line: rgba(168, 85, 247, 0.08);
+  --bg-btn: rgba(255, 255, 255, 0.06);
+  --bg-btn-hover: rgba(255, 255, 255, 0.12);
+  --bg-btn-press: rgba(255, 255, 255, 0.18);
+  --bg-op-btn: rgba(168, 85, 247, 0.12);
+  --bg-op-hover: rgba(168, 85, 247, 0.22);
+  --bg-status: #0b1120;
+
+  --fg-primary: #e2e8f0;
+  --fg-secondary: #94a3b8;
+  --fg-dim: #8b9cb5;
+  /* ← FIXED contrast: ≥4.5:1 on dark bg */
+  --fg-result: #f1f5f9;
+  --fg-header: #e2e8f0;
+  --fg-op: #c4b5fd;
+
+  /* Stitch accent palette — purple-centric */
+  --accent-primary: #a855f7;
+  --accent-primary-dim: rgba(168, 85, 247, 0.5);
+  --accent-clear: #ef4444;
+  --accent-equal: #7c3aed;
+  --accent-equal-end: #6366f1;
+  --accent-neg: #f87171;
+  --accent-active: #a855f7;
+  --accent-mem: #34d399;
+  --accent-op: #a855f7;
+  --accent-success: #22c55e;
+
+  --bg-tape-band: #2a2242;
+  --color-warning: #fbbf24;
+
+  --border-light: rgba(255, 255, 255, 0.06);
+  --border-medium: rgba(255, 255, 255, 0.1);
+  --border-accent: rgba(168, 85, 247, 0.25);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+  /* ── Spacing scale (4dp grid) ──────────────────────────────────────────── */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 40px;
+
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+  font-family: var(--font-sans);
+  color: var(--fg-primary);
+  background-color: var(--bg-base);
+}
+
+/* ── Light Theme (Stitch Notepad screens) ──────────────────────────────── */
+
+[data-theme="light"] {
+  --bg-base: #f8fafc;
+  --bg-panel: #f1f5f9;
+  --bg-surface: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-editor: #fafbfd;
+  --bg-header: #ffffff;
+  --bg-active-line: rgba(168, 85, 247, 0.06);
+  --bg-btn: rgba(0, 0, 0, 0.04);
+  --bg-btn-hover: rgba(0, 0, 0, 0.08);
+  --bg-btn-press: rgba(0, 0, 0, 0.12);
+  --bg-op-btn: rgba(168, 85, 247, 0.08);
+  --bg-op-hover: rgba(168, 85, 247, 0.15);
+  --bg-status: #f1f5f9;
+
+  --fg-primary: #0f172a;
+  --fg-secondary: #475569;
+  --fg-dim: #5a6d85;
+  /* ← FIXED contrast: ≥4.5:1 on light bg */
+  --fg-result: #0f172a;
+  --fg-header: #0f172a;
+  --fg-op: #7c3aed;
+
+  --accent-primary: #a855f7;
+  --accent-primary-dim: rgba(168, 85, 247, 0.4);
+  --accent-clear: #ef4444;
+  --accent-equal: #7c3aed;
+  --accent-equal-end: #6366f1;
+  --accent-neg: #ef4444;
+  --accent-active: #a855f7;
+  --accent-mem: #059669;
+  --accent-op: #7c3aed;
+  --accent-success: #16a34a;
+
+  --bg-tape-band: #ede9f6;
+  --color-warning: #f59e0b;
+
+  --border-light: rgba(0, 0, 0, 0.06);
+  --border-medium: rgba(0, 0, 0, 0.1);
+  --border-accent: rgba(168, 85, 247, 0.2);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Light theme depth improvements */
+[data-theme="light"] .header-bar {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .panel-bg {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .display-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* ── High Contrast ──────────────────────────────────────────────────────── */
+
+[data-theme="high-contrast"] {
+  --bg-base: #000000;
+  --bg-panel: #0a0a0a;
+  --bg-surface: #111111;
+  --bg-elevated: #1a1a1a;
+  --bg-editor: #050505;
+  --bg-header: #111111;
+  --bg-active-line: rgba(168, 85, 247, 0.15);
+  --bg-btn: rgba(255, 255, 255, 0.08);
+  --bg-btn-hover: rgba(255, 255, 255, 0.15);
+  --bg-btn-press: rgba(255, 255, 255, 0.22);
+  --bg-op-btn: rgba(168, 85, 247, 0.15);
+  --bg-op-hover: rgba(168, 85, 247, 0.28);
+  --bg-status: #0a0a0a;
+
+  --fg-primary: #ffffff;
+  --fg-secondary: #dddddd;
+  --fg-dim: #bbbbbb;
+  /* ← FIXED contrast: ≥4.5:1 on black bg */
+  --fg-result: #ffffff;
+  --fg-header: #ffffff;
+  --fg-op: #d8b4fe;
+
+  --accent-primary: #c084fc;
+  --accent-primary-dim: rgba(192, 132, 252, 0.5);
+  --accent-clear: #ff4444;
+  --accent-equal: #8b5cf6;
+  --accent-equal-end: #7366ff;
+  --accent-neg: #ff6666;
+  --accent-active: #c084fc;
+  --accent-mem: #44cc88;
+  --accent-op: #c084fc;
+  --accent-success: #44cc88;
+
+  --bg-tape-band: #1a1230;
+  --color-warning: #fbbf24;
+
+  --border-light: rgba(255, 255, 255, 0.15);
+  --border-medium: rgba(255, 255, 255, 0.25);
+  --border-accent: rgba(192, 132, 252, 0.35);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.7);
+}
+

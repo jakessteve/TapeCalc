@@ -1,0 +1,9 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nickelpack/tauri-plugin-perm/refs/tags/v2.0.0/schemas/schema.json",
+  "identifier": "default",
+  "description": "Default capability enabled for HC TapeCalc",
+  "windows": ["main"],
+  "permissions": [
+    "core:default"
+  ]
+}

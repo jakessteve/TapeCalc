@@ -1,0 +1,33 @@
+# Generated files
+/target
+/dist
+/node_modules
+/production
+/src/wasm/
+
+# Tauri
+/src-tauri/target
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.*
+
+# Build artifacts
+*.exe
+*.dll
+
+# Session data (generated at runtime)
+**/hc-tapcalc-session.json
+
+# Agent framework artifacts
+.agent/spawn_agent_tasks/output-*.log

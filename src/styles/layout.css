@@ -1,0 +1,28 @@
+﻿/* ── Semantic Layout Classes ─────────────────────────────────────────────── */
+
+.app-shell {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  padding: 12px;
+  gap: 2px;
+  background: var(--bg-base);
+}
+
+.header-bar {
+  background: var(--bg-base);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.panel-bg {
+  background: var(--bg-panel);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+}
+
+.editor-bg {
+  background: var(--bg-editor);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+}
+

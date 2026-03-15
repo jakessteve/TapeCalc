@@ -1,0 +1,13 @@
+[package]
+name = "hc-tapcalc-parser"
+description = "Expression parser for HC TapeCalc — numeric and symbolic input"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+hc-tapcalc-core = { path = "../core" }
+serde = { workspace = true, features = ["derive"] }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }

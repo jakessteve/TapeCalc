@@ -1,0 +1,223 @@
+﻿/* ── Text Classes ────────────────────────────────────────────────────────── */
+
+.text-primary {
+  color: var(--fg-primary);
+}
+
+.text-secondary {
+  color: var(--fg-secondary);
+}
+
+.text-dim {
+  color: var(--fg-dim);
+}
+
+.text-result {
+  color: var(--fg-result);
+}
+
+.text-accent {
+  color: var(--accent-primary);
+}
+
+.text-error {
+  color: var(--accent-neg);
+}
+
+.text-success {
+  color: var(--accent-success);
+}
+
+.text-op {
+  color: var(--fg-op);
+}
+
+.text-header {
+  color: var(--fg-header);
+}
+
+/* ── Form Controls ───────────────────────────────────────────────────────── */
+
+.input-field {
+  background: var(--bg-panel);
+  color: var(--fg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md) var(--space-lg);
+  outline: none;
+  font-family: var(--font-sans);
+  transition: border-color 0.15s ease;
+}
+
+.input-field:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-primary-dim);
+}
+
+.input-field::placeholder {
+  color: var(--fg-dim);
+}
+
+/* ── Gradient Icon Box ───────────────────────────────────────────────────── */
+
+.title-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-equal));
+  color: #fff;
+}
+
+.title-icon--green {
+  background: linear-gradient(135deg, var(--accent-mem), var(--accent-primary));
+}
+
+/* ── Calculator Button System ────────────────────────────────────────────── */
+
+.calc-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease, filter 0.1s ease;
+  cursor: pointer;
+  user-select: none;
+  min-height: 44px;
+  position: relative;
+  overflow: hidden;
+}
+
+.calc-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.25) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.calc-btn:active {
+  transform: scale(0.95);
+  filter: brightness(0.9);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.calc-btn:active::after {
+  opacity: 1;
+  transition: opacity 0.05s ease;
+}
+
+.calc-btn:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.calc-btn--digit {
+  background: var(--bg-btn);
+  color: var(--fg-primary);
+  font-size: 18px;
+  font-weight: 600;
+  border: 1px solid var(--border-light);
+}
+
+.calc-btn--digit:hover {
+  background: var(--bg-btn-hover);
+}
+
+.calc-btn--op {
+  background: var(--bg-op-btn);
+  color: var(--accent-op);
+  font-size: 20px;
+  font-weight: 700;
+  border: 1px solid var(--border-accent);
+}
+
+.calc-btn--op:hover {
+  background: var(--bg-op-hover);
+}
+
+.calc-btn--action {
+  background: var(--accent-clear);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.calc-btn--action:hover {
+  background: #dc2626;
+}
+
+.calc-btn--equal {
+  background: linear-gradient(135deg, var(--accent-equal), var(--accent-equal-end));
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 700;
+  border: none;
+  box-shadow: 0 2px 12px var(--accent-primary-dim), 0 0 20px rgba(168, 85, 247, 0.15);
+}
+
+.calc-btn--equal:hover {
+  background: linear-gradient(135deg, #6d28d9, #4f46e5);
+  box-shadow: 0 4px 16px var(--accent-primary-dim), 0 0 28px rgba(168, 85, 247, 0.25);
+}
+
+.calc-btn--func {
+  background: var(--bg-btn);
+  color: var(--fg-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--border-light);
+}
+
+.calc-btn--func:hover {
+  background: var(--bg-btn-hover);
+}
+
+.calc-btn--mem {
+  background: rgba(52, 211, 153, 0.06);
+  color: var(--accent-mem);
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(52, 211, 153, 0.15);
+  min-height: 48px;
+}
+
+.calc-btn--mem:hover {
+  background: rgba(52, 211, 153, 0.12);
+}
+
+/* ── Toolbar Button ──────────────────────────────────────────────────────── */
+
+.toolbar-btn {
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg-dim);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+
+.toolbar-btn:hover {
+  background: var(--bg-btn-hover);
+  color: var(--fg-secondary);
+}
+
+.toolbar-btn:active {
+  transform: scale(0.96);
+}
+
+.toolbar-btn:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* ── (Dead .tape-entry block removed — only .tape-entry-row is used) ──── */
+

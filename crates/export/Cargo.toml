@@ -1,0 +1,11 @@
+[package]
+name = "hc-tapcalc-export"
+description = "Import/export for tape sessions (TXT, CSV, JSON, PDF)"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+hc-tapcalc-core = { path = "../core" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }

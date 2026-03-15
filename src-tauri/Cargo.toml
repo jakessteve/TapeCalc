@@ -1,0 +1,29 @@
+[package]
+name = "hc-tapcalc"
+description = "HC TapeCalc — Modern cross-platform tape calculator"
+version.workspace = true
+edition.workspace = true
+build = "build.rs"
+
+[[bin]]
+name = "hc-tapcalc"
+path = "src/main.rs"
+
+[dependencies]
+tauri = { workspace = true, features = [] }
+hc-tapcalc-core = { path = "../crates/core" }
+hc-tapcalc-parser = { path = "../crates/parser" }
+hc-tapcalc-engine-numeric = { path = "../crates/engine-numeric" }
+hc-tapcalc-engine-units = { path = "../crates/engine-units" }
+hc-tapcalc-engine-currency = { path = "../crates/engine-currency" }
+hc-tapcalc-export = { path = "../crates/export" }
+hc-tapcalc-graphing = { path = "../crates/graphing" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+arboard = "3"
+dirs = "6"
+
+[build-dependencies]
+tauri-build = { workspace = true, features = [] }

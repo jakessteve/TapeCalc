@@ -1,0 +1,10 @@
+[package]
+name = "hc-tapcalc-engine-numeric"
+description = "Numeric evaluation engine using custom Pratt parser"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+hc-tapcalc-core = { path = "../core" }
+hc-tapcalc-parser = { path = "../parser" }
+thiserror = { workspace = true }

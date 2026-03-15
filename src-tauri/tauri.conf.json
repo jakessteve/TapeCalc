@@ -1,0 +1,33 @@
+{
+  "productName": "TapeCalc",
+  "version": "2.0.0",
+  "identifier": "com.heocop.hc-TapeCalc",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "TapeCalc",
+        "width": 1020,
+        "height": 768,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self' customprotocol: asset:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' asset: https: data:; connect-src 'self' https://open.er-api.com https://api.exchangerate.host ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "icon": [
+      "icons/icon.png",
+      "icons/icon.ico"
+    ],
+    "targets": ["nsis"]
+  }
+}

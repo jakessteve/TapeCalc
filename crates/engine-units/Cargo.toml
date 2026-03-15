@@ -1,0 +1,10 @@
+[package]
+name = "hc-tapcalc-engine-units"
+description = "Unit conversion engine using uom"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+hc-tapcalc-core = { path = "../core" }
+thiserror = { workspace = true }
+# uom = "0.36"  # TODO: Enable when implementing Phase 3B
