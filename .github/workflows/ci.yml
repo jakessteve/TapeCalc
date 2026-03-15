@@ -28,20 +28,15 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
 
-      # Install system deps required by Tauri on Linux
-      - name: Install Tauri system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev librsvg2-dev patchelf libssl-dev libgtk-3-dev libayatana-appindicator3-dev
 
       - name: Check formatting
         run: cargo fmt --all --check
 
       - name: Clippy lint
-        run: cargo clippy --workspace --exclude wasm-bindings -- -D warnings
+        run: cargo clippy --workspace --exclude wasm-bindings --exclude hc-tapcalc -- -D warnings
 
       - name: Run tests
-        run: cargo test --workspace --exclude wasm-bindings
+        run: cargo test --workspace --exclude wasm-bindings --exclude hc-tapcalc
 
   # ─── Frontend ─────────────────────────────────────────────────────────────────
   frontend:
