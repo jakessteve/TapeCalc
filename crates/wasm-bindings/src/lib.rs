@@ -540,8 +540,6 @@ impl AppState {
             .map_err(|e| JsValue::from_str(&e))
     }
 
-
-
     fn build_display(&self) -> CalcDisplay {
         let preview = if !self.calc_state.expression.is_empty() && !self.calc_state.just_evaluated {
             let mut expr = self.calc_state.to_eval_string();
@@ -666,7 +664,13 @@ impl AppState {
                     self.calc_state.expression.clear();
                     self.calc_state.just_evaluated = false;
                 }
-                if self.calc_state.expression.chars().last().is_some_and(|last| last.is_ascii_digit() || last == ')' || last == '.') {
+                if self
+                    .calc_state
+                    .expression
+                    .chars()
+                    .last()
+                    .is_some_and(|last| last.is_ascii_digit() || last == ')' || last == '.')
+                {
                     self.calc_state.expression.push('×');
                 }
                 self.calc_state.expression.push_str("pi");
@@ -676,7 +680,13 @@ impl AppState {
                     self.calc_state.expression.clear();
                     self.calc_state.just_evaluated = false;
                 }
-                if self.calc_state.expression.chars().last().is_some_and(|last| last.is_ascii_digit() || last == ')' || last == '.') {
+                if self
+                    .calc_state
+                    .expression
+                    .chars()
+                    .last()
+                    .is_some_and(|last| last.is_ascii_digit() || last == ')' || last == '.')
+                {
                     self.calc_state.expression.push('×');
                 }
                 self.calc_state.expression.push('e');
