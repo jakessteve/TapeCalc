@@ -36,6 +36,12 @@ enum AngleUnitDef {
 // EvalContext only has a struct form, but let's just create it directly.
 // EvalContext has a default() so we can use that instead of trying to map an enum Any/Equation.
 
+impl Default for CalcState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CalcState {
     pub fn new() -> Self {
         Self {
@@ -218,6 +224,12 @@ pub struct AppState {
     pub exchange_rates: ExchangeRates,
 }
 
+impl Default for AppState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[wasm_bindgen]
 impl AppState {
     #[wasm_bindgen(constructor)]
@@ -232,6 +244,7 @@ impl AppState {
         }
     }
 
+    #[allow(clippy::collapsible_if)]
     pub fn load_session(&mut self, json_str: &str) -> bool {
         #[derive(Deserialize)]
         struct SessionData {
@@ -527,9 +540,7 @@ impl AppState {
             .map_err(|e| JsValue::from_str(&e))
     }
 
-    fn tape_mut(&mut self) -> &mut Tape {
-        &mut self.tapes[self.active_tape]
-    }
+
 
     fn build_display(&self) -> CalcDisplay {
         let preview = if !self.calc_state.expression.is_empty() && !self.calc_state.just_evaluated {
@@ -655,10 +666,8 @@ impl AppState {
                     self.calc_state.expression.clear();
                     self.calc_state.just_evaluated = false;
                 }
-                if let Some(last) = self.calc_state.expression.chars().last() {
-                    if last.is_ascii_digit() || last == ')' || last == '.' {
-                        self.calc_state.expression.push('×');
-                    }
+                if self.calc_state.expression.chars().last().is_some_and(|last| last.is_ascii_digit() || last == ')' || last == '.') {
+                    self.calc_state.expression.push('×');
                 }
                 self.calc_state.expression.push_str("pi");
             }
@@ -667,10 +676,8 @@ impl AppState {
                     self.calc_state.expression.clear();
                     self.calc_state.just_evaluated = false;
                 }
-                if let Some(last) = self.calc_state.expression.chars().last() {
-                    if last.is_ascii_digit() || last == ')' || last == '.' {
-                        self.calc_state.expression.push('×');
-                    }
+                if self.calc_state.expression.chars().last().is_some_and(|last| last.is_ascii_digit() || last == ')' || last == '.') {
+                    self.calc_state.expression.push('×');
                 }
                 self.calc_state.expression.push('e');
             }
