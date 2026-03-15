@@ -8,8 +8,8 @@ use hc_tapcalc_parser::{AngleUnit, EvalContext};
 use std::collections::HashMap;
 
 use super::helpers::load_all_tapes;
-use super::types::TapeState;
 use super::helpers::tape_to_dto;
+use super::types::TapeState;
 
 // ─── Calculator State ────────────────────────────────────────────────────────
 

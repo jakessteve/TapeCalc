@@ -13,8 +13,8 @@ pub mod eval;
 pub mod lexer;
 
 // Re-export key types for convenience
-pub use ast::{parse, BinaryOp, ConstantKind, Expr, UnaryOp};
-pub use eval::{evaluate_ast, evaluate_with_context, AngleUnit, EvalContext};
+pub use ast::{BinaryOp, ConstantKind, Expr, UnaryOp, parse};
+pub use eval::{AngleUnit, EvalContext, evaluate_ast, evaluate_with_context};
 
 /// Parse and evaluate a numeric expression string with default context (degrees).
 ///

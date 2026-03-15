@@ -42,15 +42,42 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
                     .map_err(|_| format!("Invalid number: {num_str}"))?;
                 tokens.push(Token::Number(num));
             }
-            '+' => { tokens.push(Token::Plus); chars.next(); }
-            '-' => { tokens.push(Token::Minus); chars.next(); }
-            '*' => { tokens.push(Token::Star); chars.next(); }
-            '/' => { tokens.push(Token::Slash); chars.next(); }
-            '^' => { tokens.push(Token::Caret); chars.next(); }
-            '%' => { tokens.push(Token::Percent); chars.next(); }
-            '(' => { tokens.push(Token::LeftParen); chars.next(); }
-            ')' => { tokens.push(Token::RightParen); chars.next(); }
-            ',' => { tokens.push(Token::Comma); chars.next(); }
+            '+' => {
+                tokens.push(Token::Plus);
+                chars.next();
+            }
+            '-' => {
+                tokens.push(Token::Minus);
+                chars.next();
+            }
+            '*' => {
+                tokens.push(Token::Star);
+                chars.next();
+            }
+            '/' => {
+                tokens.push(Token::Slash);
+                chars.next();
+            }
+            '^' => {
+                tokens.push(Token::Caret);
+                chars.next();
+            }
+            '%' => {
+                tokens.push(Token::Percent);
+                chars.next();
+            }
+            '(' => {
+                tokens.push(Token::LeftParen);
+                chars.next();
+            }
+            ')' => {
+                tokens.push(Token::RightParen);
+                chars.next();
+            }
+            ',' => {
+                tokens.push(Token::Comma);
+                chars.next();
+            }
             'a'..='z' | 'A'..='Z' | '_' => {
                 let mut ident = String::new();
                 while let Some(&c) = chars.peek() {
@@ -80,7 +107,12 @@ mod tests {
         let tokens = tokenize("2 + 3").unwrap();
         assert_eq!(
             tokens,
-            vec![Token::Number(2.0), Token::Plus, Token::Number(3.0), Token::Eof]
+            vec![
+                Token::Number(2.0),
+                Token::Plus,
+                Token::Number(3.0),
+                Token::Eof
+            ]
         );
     }
 

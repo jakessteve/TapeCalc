@@ -1,15 +1,14 @@
-
 use hc_tapcalc_core::tape::Tape;
 use hc_tapcalc_core::types::CalcResult;
 use hc_tapcalc_core::undo::{TapeCommand, UndoStack};
 use hc_tapcalc_engine_currency::ExchangeRates;
-use hc_tapcalc_engine_numeric::{eval_numeric, eval_numeric_ctx, AngleUnit};
+use hc_tapcalc_engine_numeric::{AngleUnit, eval_numeric, eval_numeric_ctx};
 use hc_tapcalc_parser::eval::EvalContext;
-use wasm_bindgen_futures::js_sys::Promise;
 use serde::{Deserialize, Serialize};
 use serde_wasm_bindgen::to_value;
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen_futures::js_sys::Promise;
 
 // ─── Calculator State ────────────────────────────────────────────────────────
 
@@ -119,7 +118,8 @@ pub fn format_result(result: &CalcResult) -> String {
                 if let Some((int_part, dec_part)) = trimmed.split_once('.') {
                     let is_negative = int_part.starts_with('-');
                     let abs_int: i64 = int_part.parse().unwrap_or(0);
-                    let int_formatted = format_with_separators(if is_negative { -abs_int.abs() } else { abs_int });
+                    let int_formatted =
+                        format_with_separators(if is_negative { -abs_int.abs() } else { abs_int });
                     format!("{}.{}", int_formatted, dec_part)
                 } else {
                     let int_val: i64 = trimmed.parse().unwrap_or(0);
@@ -205,14 +205,14 @@ pub fn tape_to_dto(tape: &Tape) -> TapeState {
 pub struct AppState {
     // Current calculator state
     calc_state: CalcState,
-    
+
     // Tape history
     tapes: Vec<Tape>,
     active_tape: usize,
-    
+
     // Undo/Redo stack for the active tape
     undo_stack: UndoStack,
-    
+
     // Exchange rates cache
     #[wasm_bindgen(skip)]
     pub exchange_rates: ExchangeRates,
@@ -247,7 +247,7 @@ impl AppState {
         }
         false
     }
-    
+
     pub fn save_session(&self) -> String {
         #[derive(Serialize)]
         struct SessionData<'a> {
@@ -257,7 +257,8 @@ impl AppState {
         serde_json::to_string(&SessionData {
             tapes: &self.tapes,
             active_tape: self.active_tape,
-        }).unwrap_or_default()
+        })
+        .unwrap_or_default()
     }
 
     pub fn get_state(&mut self) -> Result<JsValue, JsValue> {
@@ -318,7 +319,13 @@ impl AppState {
     }
 
     pub fn rename_tape(&mut self, index: usize, name: String) -> Result<JsValue, JsValue> {
-        let sanitized: String = name.chars().filter(|c| c.is_alphanumeric() || c.is_whitespace() || *c == '.' || *c == '-' || *c == '_').take(50).collect();
+        let sanitized: String = name
+            .chars()
+            .filter(|c| {
+                c.is_alphanumeric() || c.is_whitespace() || *c == '.' || *c == '-' || *c == '_'
+            })
+            .take(50)
+            .collect();
         if sanitized.is_empty() {
             return Err(JsValue::from_str("Tape name cannot be empty"));
         }
@@ -342,7 +349,9 @@ impl AppState {
     }
 
     pub fn tape_entry_click(&mut self, line_number: u32) -> Result<JsValue, JsValue> {
-        let input = self.tapes[self.active_tape].entries.iter()
+        let input = self.tapes[self.active_tape]
+            .entries
+            .iter()
             .find(|e| e.line_number == line_number)
             .map(|e| e.input.clone());
         if let Some(input) = input {
@@ -353,10 +362,24 @@ impl AppState {
     }
 
     pub fn set_note(&mut self, line_number: u32, note: &str) -> Result<JsValue, JsValue> {
-        let sanitized: String = note.chars().filter(|c| c.is_alphanumeric() || c.is_whitespace() || *c == '.' || *c == '-' || *c == '_').take(500).collect();
+        let sanitized: String = note
+            .chars()
+            .filter(|c| {
+                c.is_alphanumeric() || c.is_whitespace() || *c == '.' || *c == '-' || *c == '_'
+            })
+            .take(500)
+            .collect();
         let tape = &mut self.tapes[self.active_tape];
-        if let Some(entry) = tape.entries.iter_mut().find(|e| e.line_number == line_number) {
-            entry.note = if sanitized.is_empty() { None } else { Some(sanitized) };
+        if let Some(entry) = tape
+            .entries
+            .iter_mut()
+            .find(|e| e.line_number == line_number)
+        {
+            entry.note = if sanitized.is_empty() {
+                None
+            } else {
+                Some(sanitized)
+            };
         }
         self.get_state()
     }
@@ -373,10 +396,17 @@ impl AppState {
 
     pub fn get_unit_categories(&self) -> JsValue {
         #[derive(Serialize)]
-        struct UnitInfo { name: String, display: String }
+        struct UnitInfo {
+            name: String,
+            display: String,
+        }
         #[derive(Serialize)]
-        struct UnitCategoryInfo { id: String, name: String, units: Vec<UnitInfo> }
-        
+        struct UnitCategoryInfo {
+            id: String,
+            name: String,
+            units: Vec<UnitInfo>,
+        }
+
         let cats: Vec<UnitCategoryInfo> = hc_tapcalc_engine_units::UnitCategory::all()
             .iter()
             .map(|cat| UnitCategoryInfo {
@@ -396,15 +426,21 @@ impl AppState {
     }
 
     pub fn convert_units(&self, value: f64, from: &str, to: &str) -> Result<f64, JsValue> {
-        hc_tapcalc_engine_units::convert(value, from, to)
-            .map_err(|e| JsValue::from_str(&e))
+        hc_tapcalc_engine_units::convert(value, from, to).map_err(|e| JsValue::from_str(&e))
     }
 
     pub fn get_currencies(&self) -> JsValue {
         #[derive(Serialize)]
-        struct CurrencyInfo { code: String, name: String, symbol: String, flag: String }
-        
-        let currencies: Vec<CurrencyInfo> = self.exchange_rates.available_currencies()
+        struct CurrencyInfo {
+            code: String,
+            name: String,
+            symbol: String,
+            flag: String,
+        }
+
+        let currencies: Vec<CurrencyInfo> = self
+            .exchange_rates
+            .available_currencies()
             .into_iter()
             .map(|c| CurrencyInfo {
                 code: c.code,
@@ -418,23 +454,32 @@ impl AppState {
 
     pub fn convert_currency(&self, value: f64, from: &str, to: &str) -> Result<JsValue, JsValue> {
         #[derive(Serialize)]
-        struct CurrencyConvertResult { result: f64, rate: f64, last_updated: String }
+        struct CurrencyConvertResult {
+            result: f64,
+            rate: f64,
+            last_updated: String,
+        }
 
-        let result = self.exchange_rates.convert_str(value, from, to)
+        let result = self
+            .exchange_rates
+            .convert_str(value, from, to)
             .map_err(|e| JsValue::from_str(&e))?;
-        let rate = self.exchange_rates.get_rate(from, to)
+        let rate = self
+            .exchange_rates
+            .get_rate(from, to)
             .map_err(|e| JsValue::from_str(&e))?;
-            
+
         to_value(&CurrencyConvertResult {
             result,
             rate,
             last_updated: self.exchange_rates.last_updated.clone(),
-        }).map_err(|e| JsValue::from_str(&e.to_string()))
+        })
+        .map_err(|e| JsValue::from_str(&e.to_string()))
     }
 
     pub fn refresh_rates(&mut self) -> Promise {
         let mut fresh_rates = ExchangeRates::builtin();
-        
+
         // Use wasm_bindgen_futures to convert the Rust Future into a JS Promise
         wasm_bindgen_futures::future_to_promise(async move {
             match fresh_rates.fetch_live().await {
@@ -452,18 +497,23 @@ impl AppState {
         num_points: usize,
     ) -> Result<JsValue, JsValue> {
         #[derive(Serialize)]
-        struct GraphPoint { x: f64, y: f64 }
-        
+        struct GraphPoint {
+            x: f64,
+            y: f64,
+        }
+
         let pts = hc_tapcalc_graphing::evaluate_function(expression, x_min, x_max, num_points)
             .map_err(|e| JsValue::from_str(&e))?;
-            
-        let points: Vec<GraphPoint> = pts.into_iter().map(|p| GraphPoint { x: p.x, y: p.y }).collect();
+
+        let points: Vec<GraphPoint> = pts
+            .into_iter()
+            .map(|p| GraphPoint { x: p.x, y: p.y })
+            .collect();
         to_value(&points).map_err(|e| JsValue::from_str(&e.to_string()))
     }
 
     pub fn graph_y_intercept(&self, expression: &str) -> Result<f64, JsValue> {
-        hc_tapcalc_graphing::y_intercept(expression)
-            .map_err(|e| JsValue::from_str(&e))
+        hc_tapcalc_graphing::y_intercept(expression).map_err(|e| JsValue::from_str(&e))
     }
 
     pub fn graph_x_intercepts(
@@ -481,7 +531,6 @@ impl AppState {
         &mut self.tapes[self.active_tape]
     }
 
-    
     fn build_display(&self) -> CalcDisplay {
         let preview = if !self.calc_state.expression.is_empty() && !self.calc_state.just_evaluated {
             let mut expr = self.calc_state.to_eval_string();
@@ -650,7 +699,9 @@ impl AppState {
                     }
                     self.calc_state.open_parens = 0;
 
-                    let eval_str = self.calc_state.resolve_line_refs(&self.tapes[self.active_tape]);
+                    let eval_str = self
+                        .calc_state
+                        .resolve_line_refs(&self.tapes[self.active_tape]);
                     let display_expr = self.calc_state.expression.clone();
                     let result = eval_numeric_ctx(&eval_str, &self.calc_state.eval_context);
                     let result_str = format_result(&result);
@@ -662,7 +713,8 @@ impl AppState {
                     let cmd = TapeCommand::AddEntry {
                         input: display_expr,
                     };
-                    self.undo_stack.execute(cmd, &mut self.tapes[self.active_tape]);
+                    self.undo_stack
+                        .execute(cmd, &mut self.tapes[self.active_tape]);
 
                     if let Some(entry) = self.tapes[self.active_tape].entries.last_mut() {
                         entry.result = result;
@@ -709,9 +761,18 @@ impl AppState {
                             self.calc_state.last_result = self.calc_state.expression.clone();
                             self.calc_state.just_evaluated = false;
                         }
-                    } else if self.calc_state.expression.starts_with('−') || self.calc_state.expression.starts_with('-') {
-                        let first_len = self.calc_state.expression.chars().next().unwrap().len_utf8();
-                        self.calc_state.expression = self.calc_state.expression[first_len..].to_string();
+                    } else if self.calc_state.expression.starts_with('−')
+                        || self.calc_state.expression.starts_with('-')
+                    {
+                        let first_len = self
+                            .calc_state
+                            .expression
+                            .chars()
+                            .next()
+                            .unwrap()
+                            .len_utf8();
+                        self.calc_state.expression =
+                            self.calc_state.expression[first_len..].to_string();
                     } else {
                         self.calc_state.expression.insert(0, '−');
                     }

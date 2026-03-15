@@ -58,7 +58,6 @@ impl fmt::Display for CalcResult {
     }
 }
 
-
 /// Angle unit for trigonometric functions.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum AngleUnit {

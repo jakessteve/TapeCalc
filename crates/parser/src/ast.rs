@@ -17,15 +17,9 @@ pub enum Expr {
         rhs: Box<Expr>,
     },
     /// A unary operation (e.g., -5, √9).
-    UnaryOp {
-        op: UnaryOp,
-        operand: Box<Expr>,
-    },
+    UnaryOp { op: UnaryOp, operand: Box<Expr> },
     /// A function call (e.g., sin(45), log(100)).
-    FunctionCall {
-        name: String,
-        args: Vec<Expr>,
-    },
+    FunctionCall { name: String, args: Vec<Expr> },
     /// A named variable (e.g., x, ans).
     Variable(String),
     /// A constant (π, e).
@@ -145,12 +139,12 @@ impl Parser {
         // ── Postfix & Infix (Pratt loop) ─────────────────────────────
         loop {
             let op = match self.peek() {
-                Token::Plus => Some((BinaryOp::Add, 1, 2)),       // left-assoc
+                Token::Plus => Some((BinaryOp::Add, 1, 2)), // left-assoc
                 Token::Minus => Some((BinaryOp::Subtract, 1, 2)), // left-assoc
-                Token::Star => Some((BinaryOp::Multiply, 3, 4)),  // left-assoc
-                Token::Slash => Some((BinaryOp::Divide, 3, 4)),   // left-assoc
+                Token::Star => Some((BinaryOp::Multiply, 3, 4)), // left-assoc
+                Token::Slash => Some((BinaryOp::Divide, 3, 4)), // left-assoc
                 Token::Percent => Some((BinaryOp::Modulo, 3, 4)), // left-assoc
-                Token::Caret => Some((BinaryOp::Power, 6, 5)),    // right-assoc
+                Token::Caret => Some((BinaryOp::Power, 6, 5)), // right-assoc
                 // Implicit multiplication: number followed by identifier or '('
                 Token::LeftParen | Token::Identifier(_) => {
                     // Only if lhs could be a multiplicand
@@ -168,13 +162,16 @@ impl Parser {
                     break;
                 }
                 // For implicit multiplication, don't consume the token
-                let is_implicit = matches!(
-                    self.peek(),
-                    Token::LeftParen | Token::Identifier(_)
-                ) && !matches!(
-                    self.peek(),
-                    Token::Plus | Token::Minus | Token::Star | Token::Slash | Token::Caret | Token::Percent
-                );
+                let is_implicit = matches!(self.peek(), Token::LeftParen | Token::Identifier(_))
+                    && !matches!(
+                        self.peek(),
+                        Token::Plus
+                            | Token::Minus
+                            | Token::Star
+                            | Token::Slash
+                            | Token::Caret
+                            | Token::Percent
+                    );
 
                 if !is_implicit {
                     self.advance(); // consume the operator token
@@ -348,7 +345,9 @@ mod tests {
         let expr = parse_str("2 * sin(pi / 6) + 1").unwrap();
         // Should parse as (2 * sin(pi / 6)) + 1
         match expr {
-            Expr::BinaryOp { op: BinaryOp::Add, .. } => {} // correct top-level
+            Expr::BinaryOp {
+                op: BinaryOp::Add, ..
+            } => {} // correct top-level
             other => panic!("Expected Add at top level, got {other:?}"),
         }
     }

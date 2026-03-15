@@ -33,11 +33,8 @@ pub fn format_result(result: &CalcResult) -> String {
                 if let Some((int_part, dec_part)) = trimmed.split_once('.') {
                     let is_negative = int_part.starts_with('-');
                     let abs_int: i64 = int_part.parse().unwrap_or(0);
-                    let int_formatted = format_with_separators(if is_negative {
-                        -abs_int.abs()
-                    } else {
-                        abs_int
-                    });
+                    let int_formatted =
+                        format_with_separators(if is_negative { -abs_int.abs() } else { abs_int });
                     format!("{}.{}", int_formatted, dec_part)
                 } else {
                     let int_val: i64 = trimmed.parse().unwrap_or(0);
@@ -145,8 +142,9 @@ pub fn sanitize_string(input: &str, max_len: usize) -> String {
 // ─── Persistence ─────────────────────────────────────────────────────────────
 
 fn get_save_path() -> std::path::PathBuf {
-    let base = dirs::data_local_dir()
-        .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from(".")));
+    let base = dirs::data_local_dir().unwrap_or_else(|| {
+        std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."))
+    });
     let app_dir = base.join("hc-tapcalc");
     let _ = std::fs::create_dir_all(&app_dir);
     app_dir.join("hc-tapcalc-session.json")
@@ -171,7 +169,10 @@ pub fn save_all_tapes(tapes: &[Tape], active_tape: usize) {
     };
     match serde_json::to_string_pretty(&session) {
         Ok(json) => {
-            if SAVE_IN_PROGRESS.compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst).is_ok() {
+            if SAVE_IN_PROGRESS
+                .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
+                .is_ok()
+            {
                 std::thread::spawn(move || {
                     if let Err(e) = std::fs::write(&path, &json) {
                         tracing::warn!("Failed to save session: {e}");

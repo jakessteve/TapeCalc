@@ -207,11 +207,26 @@ pub struct ExchangeRates {
 
 /// Default offline currencies with approximate rates (Mar 2026).
 const BUILTIN_RATES: &[(&str, f64)] = &[
-    ("USD", 1.0), ("EUR", 0.92), ("GBP", 0.79), ("JPY", 149.5),
-    ("CNY", 7.24), ("VND", 25_385.0), ("KRW", 1_330.0), ("AUD", 1.54),
-    ("CAD", 1.36), ("CHF", 0.88), ("SGD", 1.34), ("HKD", 7.82),
-    ("MXN", 17.15), ("BRL", 4.97), ("INR", 83.1), ("RUB", 91.5),
-    ("THB", 35.2), ("MYR", 4.72), ("PHP", 56.3), ("IDR", 15_650.0),
+    ("USD", 1.0),
+    ("EUR", 0.92),
+    ("GBP", 0.79),
+    ("JPY", 149.5),
+    ("CNY", 7.24),
+    ("VND", 25_385.0),
+    ("KRW", 1_330.0),
+    ("AUD", 1.54),
+    ("CAD", 1.36),
+    ("CHF", 0.88),
+    ("SGD", 1.34),
+    ("HKD", 7.82),
+    ("MXN", 17.15),
+    ("BRL", 4.97),
+    ("INR", 83.1),
+    ("RUB", 91.5),
+    ("THB", 35.2),
+    ("MYR", 4.72),
+    ("PHP", 56.3),
+    ("IDR", 15_650.0),
 ];
 
 impl ExchangeRates {
@@ -233,10 +248,13 @@ impl ExchangeRates {
     pub async fn fetch_live(&mut self) -> Result<(), String> {
         let url = "https://open.er-api.com/v6/latest/USD";
 
-        let response = reqwest::get(url).await
+        let response = reqwest::get(url)
+            .await
             .map_err(|e| format!("Network error: {e}"))?;
 
-        let api: ApiResponse = response.json().await
+        let api: ApiResponse = response
+            .json()
+            .await
             .map_err(|e| format!("Parse error: {e}"))?;
 
         if api.result != "success" {
@@ -255,24 +273,40 @@ impl ExchangeRates {
 
     /// Get all available currencies as display entries.
     pub fn available_currencies(&self) -> Vec<CurrencyEntry> {
-        let mut entries: Vec<CurrencyEntry> = self.rates.keys().map(|code| {
-            let (name, symbol, flag) = known_currency_meta(code);
-            CurrencyEntry {
-                code: code.clone(),
-                name: if name.is_empty() { code.clone() } else { name.to_string() },
-                symbol: if symbol.is_empty() { code.clone() } else { symbol.to_string() },
-                flag: flag.to_string(),
-            }
-        }).collect();
+        let mut entries: Vec<CurrencyEntry> = self
+            .rates
+            .keys()
+            .map(|code| {
+                let (name, symbol, flag) = known_currency_meta(code);
+                CurrencyEntry {
+                    code: code.clone(),
+                    name: if name.is_empty() {
+                        code.clone()
+                    } else {
+                        name.to_string()
+                    },
+                    symbol: if symbol.is_empty() {
+                        code.clone()
+                    } else {
+                        symbol.to_string()
+                    },
+                    flag: flag.to_string(),
+                }
+            })
+            .collect();
         entries.sort_by(|a, b| a.code.cmp(&b.code));
         entries
     }
 
     /// Convert between currencies using string codes.
     pub fn convert_str(&self, value: f64, from: &str, to: &str) -> Result<f64, String> {
-        let from_rate = self.rates.get(from)
+        let from_rate = self
+            .rates
+            .get(from)
             .ok_or_else(|| format!("Unknown currency: '{from}'"))?;
-        let to_rate = self.rates.get(to)
+        let to_rate = self
+            .rates
+            .get(to)
             .ok_or_else(|| format!("Unknown currency: '{to}'"))?;
 
         // Convert: value in FROM → USD → TO

@@ -15,7 +15,9 @@ pub fn undo(state: State<'_, Mutex<AppState>>) -> Result<CalcDisplay, String> {
     let mut state = state.lock().map_err(|e| format!("State lock error: {e}"))?;
     {
         let active = state.active_tape;
-        let AppState { tapes, undo_stack, .. } = &mut *state;
+        let AppState {
+            tapes, undo_stack, ..
+        } = &mut *state;
         let tape = &mut tapes[active];
         undo_stack.undo(tape);
     }
@@ -30,7 +32,9 @@ pub fn redo(state: State<'_, Mutex<AppState>>) -> Result<CalcDisplay, String> {
     let mut state = state.lock().map_err(|e| format!("State lock error: {e}"))?;
     {
         let active = state.active_tape;
-        let AppState { tapes, undo_stack, .. } = &mut *state;
+        let AppState {
+            tapes, undo_stack, ..
+        } = &mut *state;
         let tape = &mut tapes[active];
         undo_stack.redo(tape);
     }
@@ -109,7 +113,10 @@ pub fn tape_entry_click(
     state: State<'_, Mutex<AppState>>,
 ) -> Result<CalcDisplay, String> {
     let mut state = state.lock().map_err(|e| format!("State lock error: {e}"))?;
-    let input = state.tape().entries.iter()
+    let input = state
+        .tape()
+        .entries
+        .iter()
         .find(|e| e.line_number == line_number)
         .map(|e| e.input.clone());
     if let Some(input) = input {
@@ -154,8 +161,16 @@ pub fn set_note(
     {
         let active = state.active_tape;
         let tape = &mut state.tapes[active];
-        if let Some(entry) = tape.entries.iter_mut().find(|e| e.line_number == line_number) {
-            entry.note = if sanitized.is_empty() { None } else { Some(sanitized) };
+        if let Some(entry) = tape
+            .entries
+            .iter_mut()
+            .find(|e| e.line_number == line_number)
+        {
+            entry.note = if sanitized.is_empty() {
+                None
+            } else {
+                Some(sanitized)
+            };
         }
     }
     save_all_tapes(&state.tapes, state.active_tape);
@@ -184,10 +199,7 @@ pub fn rename_tape(
 
 /// Delete a tape by index (cannot delete the last tape).
 #[tauri::command]
-pub fn delete_tape(
-    index: usize,
-    state: State<'_, Mutex<AppState>>,
-) -> Result<CalcDisplay, String> {
+pub fn delete_tape(index: usize, state: State<'_, Mutex<AppState>>) -> Result<CalcDisplay, String> {
     let mut state = state.lock().map_err(|e| format!("State lock error: {e}"))?;
     if state.tapes.len() <= 1 {
         return Err("Cannot delete the last tape".to_string());

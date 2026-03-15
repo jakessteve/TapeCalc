@@ -3,8 +3,8 @@
 //! A tape is an ordered list of entries that supports live editing,
 //! auto-recalculation, variables, subtotals, and grand totals.
 
+use crate::types::{CalcResult, EntryId};
 use serde::{Deserialize, Serialize};
-use crate::types::{EntryId, CalcResult};
 
 /// A single entry on the calculator tape.
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -12,8 +12,11 @@ pub fn evaluate_graph_function(
     x_max: f64,
     num_points: usize,
 ) -> Result<Vec<GraphPoint>, String> {
-    graphing::evaluate_function(&expression, x_min, x_max, num_points)
-        .map(|pts| pts.into_iter().map(|p| GraphPoint { x: p.x, y: p.y }).collect())
+    graphing::evaluate_function(&expression, x_min, x_max, num_points).map(|pts| {
+        pts.into_iter()
+            .map(|p| GraphPoint { x: p.x, y: p.y })
+            .collect()
+    })
 }
 
 /// Find the y-intercept (value at x=0) of an expression.

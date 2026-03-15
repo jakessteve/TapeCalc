@@ -26,7 +26,10 @@ pub fn button_press(key: String, state: State<'_, Mutex<AppState>>) -> Result<Ca
     // P0-4: Guard against excessively long expressions
     const MAX_EXPRESSION_LEN: usize = 1000;
     if state.calc.expression.len() >= MAX_EXPRESSION_LEN
-        && !matches!(key.as_str(), "C" | "⌫" | "DEL" | "=" | "ANGLE" | "MC" | "MR" | "RPN")
+        && !matches!(
+            key.as_str(),
+            "C" | "⌫" | "DEL" | "=" | "ANGLE" | "MC" | "MR" | "RPN"
+        )
     {
         return Ok(build_display(&mut state));
     }
@@ -34,7 +37,13 @@ pub fn button_press(key: String, state: State<'_, Mutex<AppState>>) -> Result<Ca
     // Track whether this key modifies the tape (for cache invalidation)
     let mut tape_modified = false;
     let active = state.active_tape;
-    let AppState { calc, tapes, undo_stack, exchange_rates: _, .. } = &mut *state;
+    let AppState {
+        calc,
+        tapes,
+        undo_stack,
+        exchange_rates: _,
+        ..
+    } = &mut *state;
     let tape = &mut tapes[active];
 
     match key.as_str() {
@@ -247,9 +256,7 @@ pub fn button_press(key: String, state: State<'_, Mutex<AppState>>) -> Result<Ca
                         calc.last_result = calc.expression.clone();
                         calc.just_evaluated = false;
                     }
-                } else if calc.expression.starts_with('−')
-                    || calc.expression.starts_with('-')
-                {
+                } else if calc.expression.starts_with('−') || calc.expression.starts_with('-') {
                     let first_len = calc.expression.chars().next().unwrap().len_utf8();
                     calc.expression = calc.expression[first_len..].to_string();
                 } else {

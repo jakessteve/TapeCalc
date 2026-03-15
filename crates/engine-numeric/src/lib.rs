@@ -5,7 +5,7 @@
 //! (with angle units and variables).
 
 use hc_tapcalc_core::types::CalcResult;
-use hc_tapcalc_parser::{evaluate, evaluate_ctx, EvalContext};
+use hc_tapcalc_parser::{EvalContext, evaluate, evaluate_ctx};
 
 /// Evaluate a numeric expression string and return a `CalcResult`.
 ///

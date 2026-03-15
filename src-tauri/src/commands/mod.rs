@@ -9,13 +9,13 @@
 //! - `conversion` — Unit and currency conversion commands
 //! - `graphing` — Graph plotting and intercept commands
 
-pub mod state;
-pub mod types;
-pub mod helpers;
 pub mod calc;
-pub mod tape;
 pub mod conversion;
 pub mod graphing;
+pub mod helpers;
+pub mod state;
+pub mod tape;
+pub mod types;
 
 // Re-export AppState for main.rs
 pub use state::AppState;

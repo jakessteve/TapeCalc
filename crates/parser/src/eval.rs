@@ -4,8 +4,8 @@
 //! mathematical functions including trig, hyperbolic, logarithmic, and more.
 
 use crate::ast::{BinaryOp, ConstantKind, Expr, UnaryOp};
-use std::f64::consts;
 use serde::{Deserialize, Serialize};
+use std::f64::consts;
 
 /// Angle unit for trigonometric functions.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
@@ -352,8 +352,8 @@ mod tests {
 
     #[test]
     fn test_end_to_end_parse_eval() {
-        use crate::lexer::tokenize;
         use crate::ast::parse;
+        use crate::lexer::tokenize;
 
         let tokens = tokenize("2 + 3 * 4").unwrap();
         let ast = parse(tokens).unwrap();
@@ -363,8 +363,8 @@ mod tests {
 
     #[test]
     fn test_end_to_end_sin_degrees() {
-        use crate::lexer::tokenize;
         use crate::ast::parse;
+        use crate::lexer::tokenize;
 
         let tokens = tokenize("sin(90)").unwrap();
         let ast = parse(tokens).unwrap();

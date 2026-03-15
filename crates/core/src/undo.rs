@@ -141,7 +141,12 @@ mod tests {
         let mut tape = Tape::new("Test");
         let mut stack = UndoStack::new();
 
-        stack.execute(TapeCommand::AddEntry { input: "1 + 2".into() }, &mut tape);
+        stack.execute(
+            TapeCommand::AddEntry {
+                input: "1 + 2".into(),
+            },
+            &mut tape,
+        );
         assert_eq!(tape.len(), 1);
 
         stack.undo(&mut tape);
