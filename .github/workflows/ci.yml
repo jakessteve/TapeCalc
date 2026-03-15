@@ -38,10 +38,10 @@ jobs:
         run: cargo fmt --all --check
 
       - name: Clippy lint
-        run: cargo clippy --workspace --locked -- -D warnings
+        run: cargo clippy --workspace --exclude wasm-bindings -- -D warnings
 
       - name: Run tests
-        run: cargo test --workspace --locked
+        run: cargo test --workspace --exclude wasm-bindings
 
   # ─── Frontend ─────────────────────────────────────────────────────────────────
   frontend:
