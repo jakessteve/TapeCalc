@@ -120,7 +120,7 @@ function AppContent() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [calc]);
+  }, [calc, showToast]);
 
   if (!calc.state) {
     return (

@@ -359,7 +359,7 @@ const GraphCanvas = memo(function GraphCanvas({
       window.removeEventListener("mouseup", handleMouseUp);
       canvas.removeEventListener("mouseleave", handleMouseLeave);
     };
-  }, [traceEnabled, onWheel, onDragStart, onDragMove, onDragEnd, onTraceMove, onTraceLeave, draw]);
+  }, [traceEnabled, viewport.xMin, viewport.xMax, onWheel, onDragStart, onDragMove, onDragEnd, onTraceMove, onTraceLeave, draw]);
 
   return (
     <div ref={containerRef} className="graph-canvas-container">
@@ -370,20 +370,21 @@ const GraphCanvas = memo(function GraphCanvas({
 
 export function GraphView() {
   const grapher = useGrapher();
+  const { functions: graphFunctions, angleDeg: graphAngleDeg, setTracePoint } = grapher;
 
   const handleTraceMove = useCallback((sx: number, mx: number) => {
     // Pick the first visible function to follow for the state-based trace point
-    const firstFn = grapher.functions.find(f => f.visible && f.expression.trim());
+    const firstFn = graphFunctions.find(f => f.visible && f.expression.trim());
     let my = 0;
     if (firstFn) {
-      my = evaluateForGraph(firstFn.expression, mx, grapher.angleDeg);
+      my = evaluateForGraph(firstFn.expression, mx, graphAngleDeg);
     }
-    grapher.setTracePoint({ x: mx, y: my, screenX: sx, screenY: 0 });
-  }, [grapher.functions, grapher.angleDeg, grapher.setTracePoint]);
+    setTracePoint({ x: mx, y: my, screenX: sx, screenY: 0 });
+  }, [graphFunctions, graphAngleDeg, setTracePoint]);
 
   const handleTraceLeave = useCallback(() => {
-    grapher.setTracePoint(null);
-  }, [grapher.setTracePoint]);
+    setTracePoint(null);
+  }, [setTracePoint]);
 
   return (
     <div

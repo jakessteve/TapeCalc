@@ -50,30 +50,32 @@ export function SolverView() {
     inputRef.current?.focus();
   }, []);
 
+  const { handleEvaluate, setExpression, expression, insertFunction: solverInsertFunction } = solver;
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
-        solver.handleEvaluate();
+        handleEvaluate();
       }
     },
-    [solver.handleEvaluate]
+    [handleEvaluate]
   );
 
   const handleInsertConstant = useCallback(
     (value: string) => {
-      solver.setExpression(solver.expression + value);
+      setExpression(expression + value);
       inputRef.current?.focus();
     },
-    [solver]
+    [setExpression, expression]
   );
 
   const handleInsertFunction = useCallback(
     (fn: string) => {
-      solver.insertFunction(fn);
+      solverInsertFunction(fn);
       inputRef.current?.focus();
     },
-    [solver]
+    [solverInsertFunction]
   );
 
   return (

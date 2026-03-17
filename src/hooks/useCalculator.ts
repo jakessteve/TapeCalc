@@ -114,11 +114,13 @@ export function useCalculator() {
       const theme = THEME_NAMES[state.theme] ?? "dark";
       document.documentElement.setAttribute("data-theme", theme);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally narrow: only re-run on theme change, not every state update
   }, [state?.theme]);
 
   const themeName = useMemo(() => {
     if (state == null) return THEME_LABELS[Theme.Dark];
     return THEME_LABELS[state.theme] ?? THEME_LABELS[Theme.Dark];
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally narrow: only recompute on theme change
   }, [state?.theme]);
 
   // Stabilize the return value to prevent unnecessary re-renders of consumers

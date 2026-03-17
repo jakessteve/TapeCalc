@@ -81,7 +81,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     } else {
       setCurrent((c) => c + 1);
     }
-  }, [isLast, current, finish]);
+  }, [isLast, finish]);
 
   // Keyboard nav: ArrowRight/Enter = next, Escape = skip
   useEffect(() => {

@@ -7,7 +7,8 @@
 const isTauri = '__TAURI_INTERNALS__' in window || '__TAURI__' in window;
 
 // Singleton for holding our WASM abstract state
-let wasmState: any = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- WASM AppState is dynamically loaded; exact shape depends on wasm-pack output
+let wasmState: any = null; // eslint-disable-line @typescript-eslint/no-explicit-any
 let wasmInitPromise: Promise<void> | null = null;
 
 export async function invokeApi<T>(cmd: string, args: Record<string, unknown> = {}): Promise<T> {

@@ -129,6 +129,7 @@ export const TapePanel = memo(function TapePanel({
       newestLineNumber.current = null;
     }
     prevEntriesLenRef.current = entries.length;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally narrow: track entry count changes only
   }, [entries.length]);
 
 

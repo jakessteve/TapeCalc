@@ -424,6 +424,7 @@ export function initTauriMock(): boolean {
     return false; // Real Tauri runtime available
   }
 
+  // eslint-disable-next-line no-console -- intentional: notify developer that mock backend is active
   console.info(
     "%c[tauriMock] Tauri not detected — running with mock backend for UI preview",
     "color: #a855f7; font-weight: bold"
