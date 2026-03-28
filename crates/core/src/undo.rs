@@ -6,7 +6,7 @@ use crate::tape::Tape;
 #[derive(Debug, Clone)]
 pub enum TapeCommand {
     /// Add an entry with the given input string and notes.
-    AddEntry { 
+    AddEntry {
         input: String,
         note: Option<String>,
         operand_notes: std::collections::HashMap<usize, String>,
@@ -81,7 +81,11 @@ impl UndoStack {
     /// Apply a command forward.
     fn apply(&self, command: &TapeCommand, tape: &mut Tape) {
         match command {
-            TapeCommand::AddEntry { input, note, operand_notes } => {
+            TapeCommand::AddEntry {
+                input,
+                note,
+                operand_notes,
+            } => {
                 tape.push_entry(input.clone());
                 if let Some(entry) = tape.entries.last_mut() {
                     entry.note = note.clone();

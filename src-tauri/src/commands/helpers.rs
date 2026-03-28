@@ -148,9 +148,7 @@ pub fn sanitize_string(input: &str, max_len: usize) -> String {
 }
 
 pub fn prepare_eval_string(s: &str) -> String {
-    s.replace('×', "*")
-        .replace('÷', "/")
-        .replace('−', "-")
+    s.replace('×', "*").replace('÷', "/").replace('−', "-")
 }
 
 /// P1-2: Recalculate the entire tape from index 0 to the end.
@@ -159,7 +157,7 @@ pub fn prepare_eval_string(s: &str) -> String {
 pub fn recalculate_tape(tape: &mut Tape, calc: &super::state::CalcState) {
     use super::state::resolve_refs;
     let mut prev_result = 0.0;
-    
+
     // We need to collect results to resolve line references correctly
     for i in 0..tape.entries.len() {
         if tape.entries[i].is_subtotal {
@@ -169,20 +167,20 @@ pub fn recalculate_tape(tape: &mut Tape, calc: &super::state::CalcState) {
 
         let input = tape.entries[i].input.trim();
         let mut eval_str = prepare_eval_string(input);
-        
+
         if eval_str.starts_with(|c| "+-*/".contains(c)) {
             eval_str = format!("({}){}", prev_result, eval_str);
         } else {
             eval_str = format!("({})+{}", prev_result, eval_str);
         }
-        
+
         let resolved = resolve_refs(&eval_str, tape);
         let result = eval_numeric_ctx(&resolved, &calc.eval_context);
-        
+
         if let CalcResult::Numeric(v) = &result {
             prev_result = *v;
         }
-        
+
         tape.entries[i].result = result;
     }
 }

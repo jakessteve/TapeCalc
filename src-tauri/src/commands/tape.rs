@@ -16,7 +16,10 @@ pub fn undo(state: State<'_, Mutex<AppState>>) -> Result<CalcDisplay, String> {
     {
         let active = state.active_tape;
         let AppState {
-            tapes, undo_stack, calc, ..
+            tapes,
+            undo_stack,
+            calc,
+            ..
         } = &mut *state;
         let tape = &mut tapes[active];
         undo_stack.undo(tape);
@@ -34,7 +37,10 @@ pub fn redo(state: State<'_, Mutex<AppState>>) -> Result<CalcDisplay, String> {
     {
         let active = state.active_tape;
         let AppState {
-            tapes, undo_stack, calc, ..
+            tapes,
+            undo_stack,
+            calc,
+            ..
         } = &mut *state;
         let tape = &mut tapes[active];
         undo_stack.redo(tape);
@@ -67,9 +73,7 @@ pub fn delete_entry(
     let mut state = state.lock().map_err(|e| format!("State lock error: {e}"))?;
     {
         let active = state.active_tape;
-        let AppState {
-            tapes, calc, ..
-        } = &mut *state;
+        let AppState { tapes, calc, .. } = &mut *state;
         let tape = &mut tapes[active];
         tape.entries.retain(|e| e.line_number != line_number);
         for (i, entry) in tape.entries.iter_mut().enumerate() {
@@ -202,7 +206,7 @@ pub fn set_pending_note(
 ) -> Result<CalcDisplay, String> {
     let mut state = state.lock().map_err(|e| format!("State lock error: {e}"))?;
     let sanitized = sanitize_string(&note, 500);
-    
+
     if let Some(idx) = operand_index {
         if sanitized.is_empty() {
             state.calc.pending_operand_notes.remove(&idx);
@@ -216,7 +220,7 @@ pub fn set_pending_note(
             Some(sanitized)
         };
     }
-    
+
     // Virtual entry doesn't strictly need tape_dirty, but re-rendering display will pass the updated notes
     Ok(build_display(&mut state))
 }
@@ -269,11 +273,13 @@ pub fn edit_entry(
     let mut state = state.lock().map_err(|e| format!("State lock error: {e}"))?;
     {
         let active = state.active_tape;
-        let AppState {
-            tapes, calc, ..
-        } = &mut *state;
+        let AppState { tapes, calc, .. } = &mut *state;
         let tape = &mut tapes[active];
-        if let Some(entry) = tape.entries.iter_mut().find(|e| e.line_number == line_number) {
+        if let Some(entry) = tape
+            .entries
+            .iter_mut()
+            .find(|e| e.line_number == line_number)
+        {
             entry.input = new_input;
             tape.is_dirty = true;
         }
@@ -293,11 +299,13 @@ pub fn toggle_subtotal(
     let mut state = state.lock().map_err(|e| format!("State lock error: {e}"))?;
     {
         let active = state.active_tape;
-        let AppState {
-            tapes, calc, ..
-        } = &mut *state;
+        let AppState { tapes, calc, .. } = &mut *state;
         let tape = &mut tapes[active];
-        if let Some(entry) = tape.entries.iter_mut().find(|e| e.line_number == line_number) {
+        if let Some(entry) = tape
+            .entries
+            .iter_mut()
+            .find(|e| e.line_number == line_number)
+        {
             entry.is_subtotal = !entry.is_subtotal;
             tape.is_dirty = true;
         }

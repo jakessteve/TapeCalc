@@ -410,10 +410,16 @@ impl AppState {
         self.get_state()
     }
 
-    pub fn set_pending_note(&mut self, note: &str, operand_index: Option<usize>) -> Result<JsValue, JsValue> {
+    pub fn set_pending_note(
+        &mut self,
+        note: &str,
+        operand_index: Option<usize>,
+    ) -> Result<JsValue, JsValue> {
         let sanitized: String = note
             .chars()
-            .filter(|c| c.is_alphanumeric() || c.is_whitespace() || *c == '.' || *c == '-' || *c == '_')
+            .filter(|c| {
+                c.is_alphanumeric() || c.is_whitespace() || *c == '.' || *c == '-' || *c == '_'
+            })
             .take(500)
             .collect();
         if let Some(idx) = operand_index {
@@ -423,14 +429,22 @@ impl AppState {
                 self.calc_state.pending_operand_notes.insert(idx, sanitized);
             }
         } else {
-            self.calc_state.pending_result_note = if sanitized.is_empty() { None } else { Some(sanitized) };
+            self.calc_state.pending_result_note = if sanitized.is_empty() {
+                None
+            } else {
+                Some(sanitized)
+            };
         }
         self.get_state()
     }
 
     pub fn edit_entry(&mut self, line_number: u32, new_input: String) -> Result<JsValue, JsValue> {
         let tape = &mut self.tapes[self.active_tape];
-        if let Some(entry) = tape.entries.iter_mut().find(|e| e.line_number == line_number) {
+        if let Some(entry) = tape
+            .entries
+            .iter_mut()
+            .find(|e| e.line_number == line_number)
+        {
             entry.input = new_input;
             tape.is_dirty = true;
         }
@@ -440,7 +454,11 @@ impl AppState {
 
     pub fn toggle_subtotal(&mut self, line_number: u32) -> Result<JsValue, JsValue> {
         let tape = &mut self.tapes[self.active_tape];
-        if let Some(entry) = tape.entries.iter_mut().find(|e| e.line_number == line_number) {
+        if let Some(entry) = tape
+            .entries
+            .iter_mut()
+            .find(|e| e.line_number == line_number)
+        {
             entry.is_subtotal = !entry.is_subtotal;
             tape.is_dirty = true;
         }
@@ -891,14 +909,12 @@ impl AppState {
 // ─── Tape Recalculation Helpers ─────────────────────────────────────────────
 
 fn prepare_eval_string(s: &str) -> String {
-    s.replace('×', "*")
-     .replace('÷', "/")
-     .replace('−', "-")
+    s.replace('×', "*").replace('÷', "/").replace('−', "-")
 }
 
 fn recalculate_tape(tape: &mut hc_tapcalc_core::tape::Tape, calc: &CalcState) {
     let mut prev_result = 0.0;
-    
+
     for i in 0..tape.entries.len() {
         if tape.entries[i].is_subtotal {
             tape.entries[i].result = CalcResult::Numeric(prev_result);
@@ -907,17 +923,16 @@ fn recalculate_tape(tape: &mut hc_tapcalc_core::tape::Tape, calc: &CalcState) {
 
         let input = tape.entries[i].input.trim();
         let mut eval_str = prepare_eval_string(input);
-        
+
         if eval_str.starts_with(|c| "+-*/".contains(c)) {
             eval_str = format!("({}){}", prev_result, eval_str);
         } else {
             eval_str = format!("({})+{}", prev_result, eval_str);
         }
-        
+
         // Resolve references to previous tape lines e.g. $1, $2
         if eval_str.contains('$') {
-            let line_map: std::collections::HashMap<u32, &CalcResult> = tape
-                .entries[..i]
+            let line_map: std::collections::HashMap<u32, &CalcResult> = tape.entries[..i]
                 .iter()
                 .map(|e| (e.line_number, &e.result))
                 .collect();
@@ -950,11 +965,11 @@ fn recalculate_tape(tape: &mut hc_tapcalc_core::tape::Tape, calc: &CalcState) {
         }
 
         let result = hc_tapcalc_engine_numeric::eval_numeric_ctx(&eval_str, &calc.eval_context);
-        
+
         if let CalcResult::Numeric(v) = &result {
             prev_result = *v;
         }
-        
+
         tape.entries[i].result = result;
     }
 }
