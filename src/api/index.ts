@@ -11,6 +11,39 @@ const isTauri = '__TAURI_INTERNALS__' in window || '__TAURI__' in window;
 let wasmState: any = null; // eslint-disable-line @typescript-eslint/no-explicit-any
 let wasmInitPromise: Promise<void> | null = null;
 
+async function copyWithBrowserClipboard(text: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  const execCommand = document.execCommand?.bind(document);
+
+  try {
+    if (!execCommand) {
+      throw new Error('Clipboard API unavailable');
+    }
+    const copied = execCommand('copy');
+    if (!copied) {
+      throw new Error('Clipboard copy command was rejected');
+    }
+  } finally {
+    document.body.removeChild(textarea);
+  }
+}
+
+export async function copyTextToClipboard(text: string): Promise<void> {
+  if (!text) return;
+  await invokeApi<void>('copy_to_clipboard', { text });
+}
+
 export async function invokeApi<T>(cmd: string, args: Record<string, unknown> = {}): Promise<T> {
   if (isTauri) {
     const { invoke } = await import('@tauri-apps/api/core');
@@ -19,7 +52,7 @@ export async function invokeApi<T>(cmd: string, args: Record<string, unknown> = 
     if (cmd === "copy_to_clipboard") {
       const text = args?.text as string;
       if (text) {
-        await navigator.clipboard.writeText(text);
+        await copyWithBrowserClipboard(text);
       }
       return undefined as T;
     }
@@ -56,6 +89,10 @@ export async function invokeApi<T>(cmd: string, args: Record<string, unknown> = 
         case 'set_note': return wasmState.set_note(args.lineNumber as number, args.note as string) as T;
         case 'rename_tape': return wasmState.rename_tape(args.index as number, args.name as string) as T;
         case 'delete_tape': return wasmState.delete_tape(args.index as number) as T;
+        case 'set_pending_note': return wasmState.set_pending_note(args.note as string, args.operandIndex as number | undefined) as T;
+        case 'edit_entry': return wasmState.edit_entry(args.lineNumber as number, args.newInput as string) as T;
+        case 'toggle_subtotal': return wasmState.toggle_subtotal(args.lineNumber as number) as T;
+        case 'toggle_always_on_top': return undefined as T; // No-op in browser
         
         // Conversions
         case 'get_unit_categories': return wasmState.get_unit_categories() as T;

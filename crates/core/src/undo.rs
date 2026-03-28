@@ -5,8 +5,12 @@ use crate::tape::Tape;
 /// A reversible action on the tape.
 #[derive(Debug, Clone)]
 pub enum TapeCommand {
-    /// Add an entry with the given input string.
-    AddEntry { input: String },
+    /// Add an entry with the given input string and notes.
+    AddEntry { 
+        input: String,
+        note: Option<String>,
+        operand_notes: std::collections::HashMap<usize, String>,
+    },
     /// Edit an existing entry (stores old and new input).
     EditEntry {
         index: usize,
@@ -77,8 +81,12 @@ impl UndoStack {
     /// Apply a command forward.
     fn apply(&self, command: &TapeCommand, tape: &mut Tape) {
         match command {
-            TapeCommand::AddEntry { input } => {
+            TapeCommand::AddEntry { input, note, operand_notes } => {
                 tape.push_entry(input.clone());
+                if let Some(entry) = tape.entries.last_mut() {
+                    entry.note = note.clone();
+                    entry.operand_notes = operand_notes.clone();
+                }
             }
             TapeCommand::EditEntry {
                 index, new_input, ..
@@ -144,6 +152,8 @@ mod tests {
         stack.execute(
             TapeCommand::AddEntry {
                 input: "1 + 2".into(),
+                note: None,
+                operand_notes: std::collections::HashMap::new(),
             },
             &mut tape,
         );

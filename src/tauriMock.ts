@@ -58,11 +58,11 @@ let entryIdCounter = 0;
 let lineNumberCounter = 0;
 
 const defaultEntries: TapeEntryDto[] = [
-  { line_number: ++lineNumberCounter, input: "856−320", result: "536", is_error: false, note: "" },
-  { line_number: ++lineNumberCounter, input: "536×9", result: "4,824", is_error: false, note: "" },
-  { line_number: ++lineNumberCounter, input: "4,824÷12", result: "402", is_error: false, note: "" },
-  { line_number: ++lineNumberCounter, input: "sin(45°)", result: "0.70710678", is_error: false, note: "" },
-  { line_number: ++lineNumberCounter, input: "√(144)", result: "12", is_error: false, note: "" },
+  { line_number: ++lineNumberCounter, input: "856−320", result: "536", is_error: false, note: "", operand_notes: {} },
+  { line_number: ++lineNumberCounter, input: "536×9", result: "4,824", is_error: false, note: "", operand_notes: {} },
+  { line_number: ++lineNumberCounter, input: "4,824÷12", result: "402", is_error: false, note: "", operand_notes: {} },
+  { line_number: ++lineNumberCounter, input: "sin(45°)", result: "0.70710678", is_error: false, note: "", operand_notes: {} },
+  { line_number: ++lineNumberCounter, input: "√(144)", result: "12", is_error: false, note: "", operand_notes: {} },
 ];
 entryIdCounter = defaultEntries.length;
 
@@ -82,6 +82,8 @@ let mockState: CalcDisplay = {
   tape_count: 2,
   active_tape_index: 0,
   tape_names: ["Session 1", "Scratch"],
+  pending_result_note: undefined,
+  pending_operand_notes: {},
 };
 
 // Try to restore from localStorage (overrides defaults if found)
@@ -166,6 +168,7 @@ async function mockInvoke(cmd: string, args?: Record<string, unknown>): Promise<
             result: mockState.result,
             is_error: false,
             note: "",
+            operand_notes: {},
           };
           const allEntries = [...mockState.tape.entries, newEntry];
           const sum = allEntries.reduce((acc, e) => {

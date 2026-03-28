@@ -3,6 +3,7 @@ import { useState, useCallback } from "react";
 const SETTINGS_KEY = "hc-tapcalc-settings";
 
 export type RefreshInterval = 1 | 5 | 15 | 30 | 60 | 180 | 360 | 720 | 1440;
+export type KeypadLayout = "Scientific" | "Financial";
 
 export const REFRESH_INTERVAL_OPTIONS: { value: RefreshInterval; label: string }[] = [
   { value: 1, label: "1 min" },
@@ -18,10 +19,12 @@ export const REFRESH_INTERVAL_OPTIONS: { value: RefreshInterval; label: string }
 
 interface AppSettings {
   currencyRefreshInterval: RefreshInterval;
+  keypadLayout: KeypadLayout;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
   currencyRefreshInterval: 60,
+  keypadLayout: "Scientific",
 };
 
 function loadSettings(): AppSettings {

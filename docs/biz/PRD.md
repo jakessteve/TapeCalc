@@ -1,31 +1,24 @@
-# Product Requirements Document — Lịch Việt v2
+# Product Requirements Document
 
 ## Vision
-All-in-one Vietnamese metaphysics platform — Lunar Calendar, Tử Vi (Eastern Astrology), Chiêm Tinh (Western Astrology), Mai Hoa Dịch Số (Plum Blossom Numerology), and daily Phong Thủy guidance.
+_[Describe the product vision — what problem does it solve and for whom?]_
 
 ## Target Users
-Vietnamese-speaking users seeking traditional calendar and astrology features with modern, mobile-friendly UX.
+_[Define primary and secondary user segments]_
 
 ## Core Requirements
-1. Vietnamese Lunar Calendar with daily activity scoring (Dụng Sự)
-2. Tử Vi natal chart generation and interpretation (Tam Hợp + Tứ Hóa schools)
-3. Western Astrology natal chart with star map visualization
-4. Mai Hoa divination engine
-5. Cross-platform responsive design (mobile-first)
-6. Dark mode support
+1. _[Requirement 1]_
+2. _[Requirement 2]_
+3. _[Requirement 3]_
 
 ## Quality Requirements
-- Academic accuracy for all astrology engines
-- Vietnamese UI text, English code
-- Performance: < 3s first meaningful paint on 3G
-- Accessibility: WCAG 2.1 AA compliance target
+- _[Performance targets]_
+- _[Accessibility targets]_
+- _[Reliability targets]_
 
 ## Non-Goals (Current Phase)
-- Backend API or server-side rendering
-- User accounts or authentication
-- Social features
-- Monetization (deferring to future phases)
+- _[What this phase deliberately excludes]_
 
 ---
 
-> **Note:** This is a bootstrap PRD created to satisfy SPARC process gates. For detailed feature requirements, see the domain engine KI artifacts and service-level TypeScript interfaces.
+> **Note:** Fill this document at the start of each new project. All agents reference this as the Source of Truth for product scope.

@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback, useRef, lazy, Suspense } from "react";
+import { useState, useCallback, lazy, Suspense } from "react";
 import { useCalculator } from "./hooks/useCalculator";
 import { useSettings } from "./hooks/useSettings";
-import type { RefreshInterval } from "./hooks/useSettings";
+import type { RefreshInterval, KeypadLayout } from "./hooks/useSettings";
 import { Header } from "./components/Header";
 import { TapePanel } from "./components/TapePanel";
 import { CalculatorPanel } from "./components/CalculatorPanel";
@@ -16,40 +16,14 @@ const GraphView = lazy(() => import("./components/GraphView").then(m => ({ defau
 const SettingsView = lazy(() => import("./components/SettingsView").then(m => ({ default: m.SettingsView })));
 const UnitsView = lazy(() => import("./components/UnitsView").then(m => ({ default: m.UnitsView })));
 const CurrencyView = lazy(() => import("./components/CurrencyView").then(m => ({ default: m.CurrencyView })));
-
-// P2-11: Key-to-action lookup map for O(1) keyboard dispatch
-const KEY_MAP: Record<string, string> = {
-  "0": "0", "1": "1", "2": "2", "3": "3", "4": "4",
-  "5": "5", "6": "6", "7": "7", "8": "8", "9": "9",
-  "+": "+", "-": "−", "*": "×",
-  "Enter": "=", "=": "=",
-  "Backspace": "⌫", "Escape": "C",
-  "%": "%", "^": "^", "(": "(", ")": ")", ".": ".",
-};
+import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 
 function LazyFallback() {
   return (
     <div className="flex flex-1 items-center justify-center" style={{ background: "var(--bg-base)" }} role="status">
       <div className="flex flex-col items-center gap-3" aria-label="Loading content">
-        <div
-          className="animate-pulse-slow"
-          style={{
-            width: 200,
-            height: 16,
-            borderRadius: 8,
-            background: "var(--bg-btn)",
-          }}
-        />
-        <div
-          className="animate-pulse-slow"
-          style={{
-            width: 140,
-            height: 12,
-            borderRadius: 6,
-            background: "var(--bg-btn)",
-            opacity: 0.6,
-          }}
-        />
+        <div className="animate-pulse-slow" style={{ width: 200, height: 16, borderRadius: 8, background: "var(--bg-btn)" }} />
+        <div className="animate-pulse-slow" style={{ width: 140, height: 12, borderRadius: 6, background: "var(--bg-btn)", opacity: 0.6 }} />
       </div>
     </div>
   );
@@ -63,7 +37,6 @@ function AppContent() {
   const [showOnboarding, setShowOnboarding] = useState(shouldShowOnboarding);
   const { showToast } = useToast();
 
-  // P0-2: Labs features gating — persisted in localStorage
   const [showLabs, setShowLabs] = useState(() => {
     try { return localStorage.getItem("hc-tapcalc-labs") === "true"; }
     catch { return false; }
@@ -73,15 +46,10 @@ function AppContent() {
     setShowLabs(enabled);
     try { localStorage.setItem("hc-tapcalc-labs", String(enabled)); }
     catch { /* ignore */ }
-    // If user disables labs while on a labs tab, switch back to calculator
     if (!enabled && (activeTab === 3 || activeTab === 4)) {
       setActiveTab(0);
     }
   }, [activeTab]);
-
-  // P2-11: Use ref for activeTab so keyboard effect doesn't re-attach on tab switch
-  const activeTabRef = useRef(activeTab);
-  activeTabRef.current = activeTab;
 
   const handleClearTape = useCallback(() => {
     setConfirmClear(true);
@@ -93,34 +61,12 @@ function AppContent() {
     showToast("Tape cleared", "info");
   }, [calc, showToast]);
 
-  // P2-11: Optimized keyboard handler — stable effect, O(1) lookup
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      // Tab navigation: Ctrl+1 through Ctrl+6
-      if (e.ctrlKey && e.key >= "1" && e.key <= "6") {
-        e.preventDefault();
-        setActiveTab(parseInt(e.key) - 1);
-        return;
-      }
-
-      // Ctrl+Z / Ctrl+Y work on all tabs
-      if (e.ctrlKey && e.key === "z") { e.preventDefault(); calc.handleUndo(); showToast("Undo", "info"); return; }
-      if (e.ctrlKey && e.key === "y") { e.preventDefault(); calc.handleRedo(); showToast("Redo", "info"); return; }
-
-      // Only handle calculator keys when on Calculator tab
-      if (activeTabRef.current !== 0) return;
-
-      // Handle / separately to prevent browser search
-      if (e.key === "/") { e.preventDefault(); calc.press("÷"); return; }
-
-      const mapped = KEY_MAP[e.key];
-      if (mapped) {
-        calc.press(mapped);
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [calc, showToast]);
+  useKeyboardShortcuts({
+    activeTab,
+    setActiveTab,
+    calc,
+    showToast
+  });
 
   if (!calc.state) {
     return (
@@ -160,6 +106,7 @@ function AppContent() {
         showLabs={showLabs}
         onCycleTheme={calc.handleCycleTheme}
         onTabChange={setActiveTab}
+        onToggleAlwaysOnTop={calc.handleToggleAlwaysOnTop}
       />
 
       {/* Tab content — Calculator with ~60/40 tape:calc ratio */}
@@ -171,6 +118,11 @@ function AppContent() {
             grandTotal={calc.state.tape.grand_total}
             tapeNames={calc.state.tape_names}
             activeTapeIndex={calc.state.active_tape_index}
+            pendingInput={calc.state.input}
+            pendingResult={calc.state.result}
+            pendingOperandNotes={calc.state.pending_operand_notes}
+            pendingResultNote={calc.state.pending_result_note}
+            onSetPendingNote={calc.handleSetPendingNote}
             onEntryClick={calc.handleTapeClick}
             onCopyResult={calc.handleCopyResult}
             onDeleteEntry={calc.handleDeleteEntry}
@@ -180,6 +132,8 @@ function AppContent() {
             onSwitchTape={calc.handleSwitchTape}
             onRenameTape={calc.handleRenameTape}
             onDeleteTape={calc.handleDeleteTape}
+            onEditEntry={calc.handleEditEntry}
+            onToggleSubtotal={calc.handleToggleSubtotal}
             canUndo={calc.state.can_undo}
             canRedo={calc.state.can_redo}
             onUndo={calc.handleUndo}
@@ -193,6 +147,7 @@ function AppContent() {
               hasError={calc.state.has_error}
               angleUnit={calc.state.angle_unit}
               memory={calc.state.memory}
+              keypadLayout={settings.keypadLayout}
               onPress={calc.press}
             />
           </div>
@@ -227,10 +182,12 @@ function AppContent() {
             angleUnit={calc.state.angle_unit}
             showLabs={showLabs}
             currencyRefreshInterval={settings.currencyRefreshInterval}
+            keypadLayout={settings.keypadLayout}
             onCycleTheme={calc.handleCycleTheme}
             onToggleAngle={() => calc.press("ANGLE")}
             onToggleLabs={toggleLabs}
             onChangeCurrencyRefreshInterval={(v: RefreshInterval) => setSetting("currencyRefreshInterval", v)}
+            onChangeKeypadLayout={(v: KeypadLayout) => setSetting("keypadLayout", v)}
           />
         )}
       </Suspense>

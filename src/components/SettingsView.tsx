@@ -13,18 +13,21 @@ import {
   Heart,
   DollarSign,
   Timer,
+  LayoutGrid,
 } from "lucide-react";
-import { REFRESH_INTERVAL_OPTIONS, type RefreshInterval } from "../hooks/useSettings";
+import { REFRESH_INTERVAL_OPTIONS, type RefreshInterval, type KeypadLayout } from "../hooks/useSettings";
 
 interface SettingsViewProps {
   themeName: string;
   angleUnit: string;
   showLabs: boolean;
   currencyRefreshInterval: RefreshInterval;
+  keypadLayout: KeypadLayout;
   onCycleTheme: () => void;
   onToggleAngle: () => void;
   onToggleLabs: (enabled: boolean) => void;
   onChangeCurrencyRefreshInterval: (value: RefreshInterval) => void;
+  onChangeKeypadLayout: (value: KeypadLayout) => void;
 }
 
 function SettingRow({
@@ -102,10 +105,12 @@ export function SettingsView({
   angleUnit,
   showLabs,
   currencyRefreshInterval,
+  keypadLayout,
   onCycleTheme,
   onToggleAngle,
   onToggleLabs,
   onChangeCurrencyRefreshInterval,
+  onChangeKeypadLayout,
 }: SettingsViewProps) {
   return (
     <div
@@ -145,6 +150,22 @@ export function SettingsView({
             >
               {angleUnit}
             </button>
+          </SettingRow>
+
+          <SettingRow
+            label="Keypad Layout"
+            description="Choose active advanced button sets"
+            icon={LayoutGrid}
+          >
+            <select
+              className="setting-select focus-ring"
+              value={keypadLayout}
+              onChange={(e) => onChangeKeypadLayout(e.target.value as KeypadLayout)}
+              aria-label="Keypad Layout"
+            >
+              <option value="Scientific">Scientific</option>
+              <option value="Financial">Financial</option>
+            </select>
           </SettingRow>
         </Section>
 

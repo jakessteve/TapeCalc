@@ -23,6 +23,8 @@ pub struct CalcState {
     pub angle_unit: AngleUnit,
     pub eval_context: EvalContext,
     pub theme: i32,
+    pub pending_result_note: Option<String>,
+    pub pending_operand_notes: std::collections::HashMap<usize, String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -53,6 +55,8 @@ impl CalcState {
             angle_unit: AngleUnit::Degrees,
             eval_context: EvalContext::default(),
             theme: 1,
+            pending_result_note: None,
+            pending_operand_notes: std::collections::HashMap::new(),
         }
     }
 
@@ -164,6 +168,7 @@ pub struct TapeEntryDto {
     pub result: String,
     pub is_error: bool,
     pub note: String,
+    pub operand_notes: std::collections::HashMap<usize, String>,
 }
 
 #[derive(Serialize, Clone)]
@@ -186,6 +191,8 @@ pub struct CalcDisplay {
     pub tape_count: usize,
     pub active_tape_index: usize,
     pub tape_names: Vec<String>,
+    pub pending_result_note: Option<String>,
+    pub pending_operand_notes: std::collections::HashMap<usize, String>,
 }
 
 pub fn tape_to_dto(tape: &Tape) -> TapeState {
@@ -199,6 +206,7 @@ pub fn tape_to_dto(tape: &Tape) -> TapeState {
                 result: format_result(&e.result),
                 is_error: matches!(e.result, CalcResult::Error(_)),
                 note: e.note.clone().unwrap_or_default(),
+                operand_notes: e.operand_notes.clone(),
             })
             .collect(),
         grand_total: format_result(&CalcResult::Numeric(tape.grand_total())),
@@ -285,12 +293,16 @@ impl AppState {
     }
 
     pub fn undo(&mut self) -> Result<JsValue, JsValue> {
-        self.undo_stack.undo(&mut self.tapes[self.active_tape]);
+        let tape = &mut self.tapes[self.active_tape];
+        self.undo_stack.undo(tape);
+        recalculate_tape(tape, &self.calc_state);
         self.get_state()
     }
 
     pub fn redo(&mut self) -> Result<JsValue, JsValue> {
-        self.undo_stack.redo(&mut self.tapes[self.active_tape]);
+        let tape = &mut self.tapes[self.active_tape];
+        self.undo_stack.redo(tape);
+        recalculate_tape(tape, &self.calc_state);
         self.get_state()
     }
 
@@ -307,6 +319,7 @@ impl AppState {
         for (i, entry) in tape.entries.iter_mut().enumerate() {
             entry.line_number = i as u32 + 1;
         }
+        recalculate_tape(tape, &self.calc_state);
         tape.is_dirty = true;
         self.get_state()
     }
@@ -394,6 +407,44 @@ impl AppState {
                 Some(sanitized)
             };
         }
+        self.get_state()
+    }
+
+    pub fn set_pending_note(&mut self, note: &str, operand_index: Option<usize>) -> Result<JsValue, JsValue> {
+        let sanitized: String = note
+            .chars()
+            .filter(|c| c.is_alphanumeric() || c.is_whitespace() || *c == '.' || *c == '-' || *c == '_')
+            .take(500)
+            .collect();
+        if let Some(idx) = operand_index {
+            if sanitized.is_empty() {
+                self.calc_state.pending_operand_notes.remove(&idx);
+            } else {
+                self.calc_state.pending_operand_notes.insert(idx, sanitized);
+            }
+        } else {
+            self.calc_state.pending_result_note = if sanitized.is_empty() { None } else { Some(sanitized) };
+        }
+        self.get_state()
+    }
+
+    pub fn edit_entry(&mut self, line_number: u32, new_input: String) -> Result<JsValue, JsValue> {
+        let tape = &mut self.tapes[self.active_tape];
+        if let Some(entry) = tape.entries.iter_mut().find(|e| e.line_number == line_number) {
+            entry.input = new_input;
+            tape.is_dirty = true;
+        }
+        recalculate_tape(tape, &self.calc_state);
+        self.get_state()
+    }
+
+    pub fn toggle_subtotal(&mut self, line_number: u32) -> Result<JsValue, JsValue> {
+        let tape = &mut self.tapes[self.active_tape];
+        if let Some(entry) = tape.entries.iter_mut().find(|e| e.line_number == line_number) {
+            entry.is_subtotal = !entry.is_subtotal;
+            tape.is_dirty = true;
+        }
+        recalculate_tape(tape, &self.calc_state);
         self.get_state()
     }
 
@@ -577,6 +628,8 @@ impl AppState {
             tape_count: self.tapes.len(),
             active_tape_index: self.active_tape,
             tape_names: self.tapes.iter().map(|t| t.name.clone()).collect(),
+            pending_result_note: None,
+            pending_operand_notes: std::collections::HashMap::new(),
         }
     }
 
@@ -727,8 +780,13 @@ impl AppState {
                         self.calc_state.eval_context.last_answer = Some(*v);
                     }
 
+                    let note = self.calc_state.pending_result_note.take();
+                    let operand_notes = std::mem::take(&mut self.calc_state.pending_operand_notes);
+
                     let cmd = TapeCommand::AddEntry {
                         input: display_expr,
+                        note,
+                        operand_notes,
                     };
                     self.undo_stack
                         .execute(cmd, &mut self.tapes[self.active_tape]);
@@ -827,5 +885,76 @@ impl AppState {
             }
             _ => {}
         }
+    }
+}
+
+// ─── Tape Recalculation Helpers ─────────────────────────────────────────────
+
+fn prepare_eval_string(s: &str) -> String {
+    s.replace('×', "*")
+     .replace('÷', "/")
+     .replace('−', "-")
+}
+
+fn recalculate_tape(tape: &mut hc_tapcalc_core::tape::Tape, calc: &CalcState) {
+    let mut prev_result = 0.0;
+    
+    for i in 0..tape.entries.len() {
+        if tape.entries[i].is_subtotal {
+            tape.entries[i].result = CalcResult::Numeric(prev_result);
+            continue;
+        }
+
+        let input = tape.entries[i].input.trim();
+        let mut eval_str = prepare_eval_string(input);
+        
+        if eval_str.starts_with(|c| "+-*/".contains(c)) {
+            eval_str = format!("({}){}", prev_result, eval_str);
+        } else {
+            eval_str = format!("({})+{}", prev_result, eval_str);
+        }
+        
+        // Resolve references to previous tape lines e.g. $1, $2
+        if eval_str.contains('$') {
+            let line_map: std::collections::HashMap<u32, &CalcResult> = tape
+                .entries[..i]
+                .iter()
+                .map(|e| (e.line_number, &e.result))
+                .collect();
+            let mut resolved = String::with_capacity(eval_str.len());
+            let chars: Vec<char> = eval_str.chars().collect();
+            let mut j = 0;
+            while j < chars.len() {
+                if chars[j] == '$' && j + 1 < chars.len() && chars[j + 1].is_ascii_digit() {
+                    let start = j + 1;
+                    let mut end = start;
+                    while end < chars.len() && chars[end].is_ascii_digit() {
+                        end += 1;
+                    }
+                    let line_num: u32 = chars[start..end]
+                        .iter()
+                        .collect::<String>()
+                        .parse()
+                        .unwrap_or(0);
+                    match line_map.get(&line_num) {
+                        Some(CalcResult::Numeric(v)) => resolved.push_str(&format!("({})", v)),
+                        _ => resolved.push('0'),
+                    }
+                    j = end;
+                } else {
+                    resolved.push(chars[j]);
+                    j += 1;
+                }
+            }
+            eval_str = resolved;
+        }
+
+        let result = hc_tapcalc_engine_numeric::eval_numeric_ctx(&eval_str, &calc.eval_context);
+        
+        if let CalcResult::Numeric(v) = &result {
+            prev_result = *v;
+        }
+        
+        tape.entries[i].result = result;
     }
 }

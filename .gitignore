@@ -1,33 +1,70 @@
-# Generated files
-/target
-/dist
-/node_modules
-/production
-/src/wasm/
+# Dependencies
+node_modules/
+vendor/
+packages/
+.pnp
+.pnp.js
 
-# Tauri
-/src-tauri/target
+# Build Outputs
+build/
+build32/
+build64/
+dist/
+out/
+bin/
+obj/
+installer/
+release/
+production/
+target/
+.next/
+.nuxt/
+.output/
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
+# Logs & Databases
+*.log
+*.sqlite
+*.db
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Env
+# Environment Variables
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 .env.*
 
-# Build artifacts
-*.exe
-*.dll
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
 
-# Session data (generated at runtime)
-**/hc-tapcalc-session.json
+# IDEs & OS Files
+.vscode/
+.idea/
+.vs/
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# Agent framework artifacts
+# Testing & Coverage
+coverage/
+.nyc_output/
+
+# Cache directories
+.eslintcache
+.stylelintcache
+.npm
+.yarn
+
+# Agent runtime artifacts (not framework)
 .agent/spawn_agent_tasks/output-*.log
+.agent/spawn_agent_tasks/temp_runner_*.ps1
+.agent/spawn_agent_tasks/huge_prompt.txt
+
+# HC runtime artifacts
+.hc/debug/
+.hc/perf-audit/

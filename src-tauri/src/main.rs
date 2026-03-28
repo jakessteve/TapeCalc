@@ -33,8 +33,12 @@ fn main() {
             commands::tape::new_tape,
             commands::tape::switch_tape,
             commands::tape::set_note,
+            commands::tape::set_pending_note,
             commands::tape::rename_tape,
             commands::tape::delete_tape,
+            commands::tape::edit_entry,
+            commands::tape::toggle_subtotal,
+            commands::tape::toggle_always_on_top,
             // Unit conversion
             commands::conversion::get_unit_categories,
             commands::conversion::convert_units,

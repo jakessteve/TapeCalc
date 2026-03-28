@@ -13,6 +13,7 @@ import {
   Equal
 } from "lucide-react";
 import { formatDisplayNumber, formatInputExpression } from "../utils/formatting";
+import type { KeypadLayout } from "../hooks/useSettings";
 
 interface CalculatorPanelProps {
   input: string;
@@ -20,6 +21,7 @@ interface CalculatorPanelProps {
   hasError: boolean;
   angleUnit: string;
   memory: string;
+  keypadLayout?: KeypadLayout;
   onPress: (key: string) => void;
 }
 
@@ -90,7 +92,8 @@ export const CalculatorPanel = memo(function CalculatorPanel({
   hasError,
   angleUnit,
   memory,
-  onPress,
+  keypadLayout,
+  onPress: originalOnPress,
 }: CalculatorPanelProps) {
   const [showSci, setShowSci] = useState(false);
   const [sciPage, setSciPage] = useState(0);
@@ -99,7 +102,12 @@ export const CalculatorPanel = memo(function CalculatorPanel({
 
   // All 6 scientific rows as data
   const sciRows = [
-    [
+    keypadLayout === "Financial" ? [
+      { label: "TAX+", press: "*1.2", aria: "Add 20% Tax" },
+      { label: "TAX-", press: "/1.2", aria: "Subtract 20% Tax" },
+      { label: "MRG%", press: "*1.5", aria: "Add 50% Margin" },
+      { label: "√", press: "sqrt", aria: "Square root" },
+    ] : [
       { label: "sin", press: "sin", aria: "Sine" },
       { label: "cos", press: "cos", aria: "Cosine" },
       { label: "tan", press: "tan", aria: "Tangent" },
@@ -136,6 +144,17 @@ export const CalculatorPanel = memo(function CalculatorPanel({
       { label: "Rand", press: "rand", aria: "Random number" },
     ],
   ];
+
+  const onPress = (key: string) => {
+    if (key === "*1.2" || key === "/1.2" || key === "*1.5") {
+      for (const char of key) {
+        originalOnPress(char);
+      }
+      originalOnPress("=");
+      return;
+    }
+    originalOnPress(key);
+  };
 
   const totalSciPages = Math.ceil(sciRows.length / sciRowsPerPage);
   const currentPageRows = sciRows.slice(

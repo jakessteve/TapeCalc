@@ -24,6 +24,8 @@ pub struct CalcState {
     pub angle_unit: AngleUnit,
     pub eval_context: EvalContext,
     pub theme: i32,
+    pub pending_operand_notes: std::collections::HashMap<usize, String>,
+    pub pending_result_note: Option<String>,
 }
 
 impl CalcState {
@@ -37,6 +39,8 @@ impl CalcState {
             angle_unit: AngleUnit::Degrees,
             eval_context: EvalContext::default(),
             theme: 1,
+            pending_operand_notes: std::collections::HashMap::new(),
+            pending_result_note: None,
         }
     }
 
@@ -50,41 +54,45 @@ impl CalcState {
     /// P3-14: Uses HashMap for O(1) line number lookup instead of linear scan.
     pub fn resolve_line_refs(&self, tape: &Tape) -> String {
         let expr = self.to_eval_string();
-        if !expr.contains('$') {
-            return expr;
-        }
-        let line_map: HashMap<u32, &CalcResult> = tape
-            .entries
-            .iter()
-            .map(|e| (e.line_number, &e.result))
-            .collect();
-        let mut result = String::with_capacity(expr.len());
-        let chars: Vec<char> = expr.chars().collect();
-        let mut i = 0;
-        while i < chars.len() {
-            if chars[i] == '$' && i + 1 < chars.len() && chars[i + 1].is_ascii_digit() {
-                let start = i + 1;
-                let mut end = start;
-                while end < chars.len() && chars[end].is_ascii_digit() {
-                    end += 1;
-                }
-                let line_num: u32 = chars[start..end]
-                    .iter()
-                    .collect::<String>()
-                    .parse()
-                    .unwrap_or(0);
-                match line_map.get(&line_num) {
-                    Some(CalcResult::Numeric(v)) => result.push_str(&format!("({})", v)),
-                    _ => result.push('0'),
-                }
-                i = end;
-            } else {
-                result.push(chars[i]);
-                i += 1;
-            }
-        }
-        result
+        resolve_refs(&expr, tape)
     }
+}
+
+pub fn resolve_refs(expr: &str, tape: &Tape) -> String {
+    if !expr.contains('$') {
+        return expr.to_string();
+    }
+    let line_map: HashMap<u32, &CalcResult> = tape
+        .entries
+        .iter()
+        .map(|e| (e.line_number, &e.result))
+        .collect();
+    let mut result = String::with_capacity(expr.len());
+    let chars: Vec<char> = expr.chars().collect();
+    let mut i = 0;
+    while i < chars.len() {
+        if chars[i] == '$' && i + 1 < chars.len() && chars[i + 1].is_ascii_digit() {
+            let start = i + 1;
+            let mut end = start;
+            while end < chars.len() && chars[end].is_ascii_digit() {
+                end += 1;
+            }
+            let line_num: u32 = chars[start..end]
+                .iter()
+                .collect::<String>()
+                .parse()
+                .unwrap_or(0);
+            match line_map.get(&line_num) {
+                Some(CalcResult::Numeric(v)) => result.push_str(&format!("({})", v)),
+                _ => result.push('0'),
+            }
+            i = end;
+        } else {
+            result.push(chars[i]);
+            i += 1;
+        }
+    }
+    result
 }
 
 // ─── Application State ──────────────────────────────────────────────────────

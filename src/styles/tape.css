@@ -1,4 +1,4 @@
-﻿/* ── Tape Background ───────────────────────────────────────────────────── */
+/* ── Tape Background ───────────────────────────────────────────────────── */
 
 .tape-dots-bg {
   background-color: var(--bg-editor);
@@ -53,6 +53,35 @@
   min-height: 26px;
   padding-top: 1px;
   padding-bottom: 1px;
+}
+
+/* Sub-expression group — bracket indicator on left */
+.tape-subexpr-group {
+  position: relative;
+  margin-left: 2px;
+}
+
+.tape-subexpr-group::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-left: 2px solid var(--fg-dim);
+  border-top: 2px solid var(--fg-dim);
+  border-bottom: 2px solid var(--fg-dim);
+  border-radius: 2px 0 0 2px;
+  opacity: 0.3;
+}
+
+/* Nested operand rows — slightly indented */
+.tape-entry-row--nested {
+  padding-left: 18px;
+}
+
+.tape-entry-row--nested .tape-value {
+  font-size: 13px;
 }
 
 /* Result row — slightly bolder */

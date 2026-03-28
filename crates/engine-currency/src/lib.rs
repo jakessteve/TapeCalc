@@ -248,7 +248,19 @@ impl ExchangeRates {
     pub async fn fetch_live(&mut self) -> Result<(), String> {
         let url = "https://open.er-api.com/v6/latest/USD";
 
-        let response = reqwest::get(url)
+        #[cfg(not(target_arch = "wasm32"))]
+        let client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(10))
+            .tls_built_in_root_certs(true)
+            .build()
+            .map_err(|e| format!("Client builder error: {e}"))?;
+
+        #[cfg(target_arch = "wasm32")]
+        let client = reqwest::Client::new();
+
+        let response = client
+            .get(url)
+            .send()
             .await
             .map_err(|e| format!("Network error: {e}"))?;
 

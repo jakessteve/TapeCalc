@@ -16,7 +16,7 @@ import {
 import { useUnitsConverter } from "../hooks/useUnitsConverter";
 import { CustomSelect, type SelectOption } from "./CustomSelect";
 import { useToast } from "./Toast";
-import { invokeApi as invoke } from "../api";
+import { copyTextToClipboard, invokeApi as invoke } from "../api";
 
 // Lucide icons for each category — consistent cross-platform rendering
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
@@ -97,8 +97,7 @@ export function UnitsView() {
 
   const handleCopyResult = () => {
     if (result && !error) {
-      navigator.clipboard
-        .writeText(result)
+      copyTextToClipboard(result)
         .then(() => {
           showToast(`Copied: ${result} ${toDisplay}`, "success");
         })

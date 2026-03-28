@@ -94,8 +94,14 @@ export function useCalculator() {
   }, []);
 
   const handleSetNote = useCallback(
-    (lineNumber: number, note: string) =>
-      invokeAction("set_note", { lineNumber, note }),
+    (lineNumber: number, note: string, operandIndex?: number) =>
+      invokeAction("set_note", { lineNumber, note, operandIndex }),
+    [invokeAction]
+  );
+
+  const handleSetPendingNote = useCallback(
+    (note: string, operandIndex?: number) =>
+      invokeAction("set_pending_note", { note, operandIndex }),
     [invokeAction]
   );
 
@@ -108,6 +114,24 @@ export function useCalculator() {
     (index: number) => invokeAction("delete_tape", { index }),
     [invokeAction]
   );
+
+  const handleEditEntry = useCallback(
+    (lineNumber: number, newInput: string) => invokeAction("edit_entry", { lineNumber, newInput }),
+    [invokeAction]
+  );
+
+  const handleToggleSubtotal = useCallback(
+    (lineNumber: number) => invokeAction("toggle_subtotal", { lineNumber }),
+    [invokeAction]
+  );
+
+  const handleToggleAlwaysOnTop = useCallback(async (enable: boolean) => {
+    try {
+      await invoke("toggle_always_on_top", { enable });
+    } catch (e) {
+      console.error("[useCalculator] toggle_always_on_top failed:", e);
+    }
+  }, []);
 
   useEffect(() => {
     if (state) {
@@ -139,8 +163,12 @@ export function useCalculator() {
       handleTapeClick,
       handleCopyResult,
       handleSetNote,
+      handleSetPendingNote,
       handleRenameTape,
       handleDeleteTape,
+      handleEditEntry,
+      handleToggleSubtotal,
+      handleToggleAlwaysOnTop,
       themeName,
     }),
     [
@@ -157,8 +185,12 @@ export function useCalculator() {
       handleTapeClick,
       handleCopyResult,
       handleSetNote,
+      handleSetPendingNote,
       handleRenameTape,
       handleDeleteTape,
+      handleEditEntry,
+      handleToggleSubtotal,
+      handleToggleAlwaysOnTop,
       themeName,
     ]
   );

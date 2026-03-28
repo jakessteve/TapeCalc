@@ -14,7 +14,7 @@ interface TapePanelProps {
   onEntryClick: (lineNumber: number) => void;
   onCopyResult: (text: string) => void;
   onDeleteEntry: (lineNumber: number) => void;
-  onSetNote: (lineNumber: number, note: string) => void;
+  onSetNote: (lineNumber: number, note: string, operandIndex?: number) => void;
   onClearTape: () => void;
   onNewTape: () => void;
   onSwitchTape: (index: number) => void;
@@ -23,6 +23,15 @@ interface TapePanelProps {
   onUndo: () => void;
   onRedo: () => void;
   onExport?: (format: ExportFormat) => void;
+  onEditEntry: (lineNumber: number, newInput: string) => void;
+  onToggleSubtotal: (lineNumber: number) => void;
+
+  // Pending live input
+  pendingInput?: string;
+  pendingResult?: string;
+  pendingOperandNotes?: Record<number, string>;
+  pendingResultNote?: string;
+  onSetPendingNote?: (note: string, operandIndex?: number) => void;
 }
 
 /* parseOperator, formatTapeValue, opInfo → imported from ../utils/formatting */
@@ -39,7 +48,7 @@ function parseOperator(input: string): { op: string; opClass: string } {
 function opInfo(ch: string): { op: string; opClass: string } {
   if (ch === "+" ) return { op: "+", opClass: "tape-op--add" };
   if (ch === "-" || ch === "−") return { op: "−", opClass: "tape-op--sub" };
-  if (ch === "×" || ch === "*") return { op: "×", opClass: "tape-op--mul" };
+  if (ch === "×" || ch === "*" || ch === "x" || ch === "X") return { op: "×", opClass: "tape-op--mul" };
   if (ch === "÷" || ch === "/") return { op: "÷", opClass: "tape-op--div" };
   return { op: "+", opClass: "tape-op--add" };
 }
@@ -50,35 +59,92 @@ interface Operand {
   value: string;
 }
 
+/** Extended operand that may contain recursively-parsed sub-expressions */
+interface OperandNode extends Operand {
+  children?: OperandNode[];
+}
+
 /**
  * Parse a simple expression like "856-320" or "536×9" into individual operands.
- * Returns null for complex expressions (functions, nested parens, etc.) that can't
+ * Parenthesized sub-expressions are recursively expanded into children.
+ * Returns null for complex expressions (functions, etc.) that can't
  * be meaningfully decomposed.
  */
-function parseExpressionToOperands(input: string): Operand[] | null {
+function parseExpressionToOperands(input: string): OperandNode[] | null {
   const trimmed = input.trim();
 
-  // Don't decompose function calls, roots, or parenthesized expressions
-  if (/^[a-zA-Z]/.test(trimmed) || trimmed.startsWith("√") || trimmed.includes("(")) {
+  // Don't decompose standalone function calls or root expressions (e.g. "sin(45)")
+  if (/^[a-zA-Z]/.test(trimmed) || trimmed.startsWith("√(")) {
     return null;
   }
 
-  const operands: Operand[] = [];
-  // Regex: match an optional leading sign, then digits (with commas), optional decimal
-  const tokenRegex = /([+\-−×÷*/])?(\d[\d,]*\.?\d*)/g;
-  let match: RegExpExecArray | null;
-  let lastIndex = 0;
+  // Tokenize: split into numbers and parenthesized groups, respecting nesting
+  const operands: OperandNode[] = [];
+  let i = 0;
+  let currentOp = "+";
 
-  while ((match = tokenRegex.exec(trimmed)) !== null) {
-    // If there's unmatched text before this token, expression is too complex
-    if (match.index > lastIndex && trimmed.slice(lastIndex, match.index).trim()) {
-      return null;
+  while (i < trimmed.length) {
+    const ch = trimmed[i];
+
+    // Skip all whitespace (including non-breaking spaces)
+    if (/\\s/.test(ch)) { i++; continue; }
+
+    // Operator characters (including en-dash and em-dash for safety)
+    if ("+−-–—×÷*/xX".includes(ch)) {
+      // Leading negative sign → part of the first operand
+      if (operands.length === 0 && (ch === "−" || ch === "-" || ch === "–" || ch === "—")) {
+        // collect the negative number
+        let numStr = "−";
+        i++;
+        while (i < trimmed.length && /[\d.,]/.test(trimmed[i])) {
+          numStr += trimmed[i]; i++;
+        }
+        if (numStr.length > 1) {
+          const { op: opChar, opClass } = opInfo("+");
+          operands.push({ op: opChar, opClass, value: numStr });
+        }
+        continue;
+      }
+      currentOp = ch;
+      i++;
+      continue;
     }
-    lastIndex = tokenRegex.lastIndex;
 
-    const rawOp = match[1] || "+";
-    const { op, opClass } = opInfo(rawOp);
-    operands.push({ op, opClass, value: match[2] });
+    // Parenthesized sub-expression → extract and recursively parse
+    if (ch === "(") {
+      let depth = 0;
+      let parenExpr = "";
+      while (i < trimmed.length) {
+        if (trimmed[i] === "(") depth++;
+        if (trimmed[i] === ")") depth--;
+        parenExpr += trimmed[i];
+        i++;
+        if (depth === 0) break;
+      }
+      const { op: opChar, opClass } = opInfo(currentOp);
+      // Strip outer parens and try to recursively expand
+      const inner = parenExpr.slice(1, -1);
+      const children = parseExpressionToOperands(inner);
+      operands.push({ op: opChar, opClass, value: parenExpr, children: children ?? undefined });
+      currentOp = "+";
+      continue;
+    }
+
+    // Number: digits, commas, decimal point
+    if (/[\d.,]/.test(ch)) {
+      let numStr = "";
+      while (i < trimmed.length && /[\d.,]/.test(trimmed[i])) {
+        numStr += trimmed[i]; i++;
+      }
+      const { op: opChar, opClass } = opInfo(currentOp);
+      operands.push({ op: opChar, opClass, value: numStr });
+      currentOp = "+";
+      continue;
+    }
+
+    // Unrecognized character → can't decompose
+    console.warn(`Unrecognized char in tape parse: '${ch}' (code: ${ch.charCodeAt(0)}) in expr: "${trimmed}"`);
+    return null;
   }
 
   // Must have at least 2 operands for multi-line breakdown to make sense
@@ -107,13 +173,27 @@ export const TapePanel = memo(function TapePanel({
   onUndo,
   onRedo,
   onExport,
+  onEditEntry,
+  onToggleSubtotal,
+  pendingInput,
+  pendingResult,
+  pendingOperandNotes,
+  pendingResultNote,
+  onSetPendingNote,
 }: TapePanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [selectedLine, setSelectedLine] = useState<number | null>(null);
-  const [editingNoteFor, setEditingNoteFor] = useState<number | null>(null);
+  const [editingNoteForId, setEditingNoteForId] = useState<string | null>(null);
   const [editingTabIdx, setEditingTabIdx] = useState<number | null>(null);
   const [editingTapeNote, setEditingTapeNote] = useState(false);
   const [tapeNoteText, setTapeNoteText] = useState("");
+  
+  // Inline entry editing
+  const [editingEntryLine, setEditingEntryLine] = useState<number | null>(null);
+  const [editingEntryText, setEditingEntryText] = useState("");
+  const inputEditRef = useRef<HTMLInputElement>(null);
+  const isCancelingEdit = useRef(false);
+
   const noteInputRef = useRef<HTMLInputElement>(null);
   const tabInputRef = useRef<HTMLInputElement>(null);
   const tapeNoteInputRef = useRef<HTMLInputElement>(null);
@@ -140,6 +220,54 @@ export const TapePanel = memo(function TapePanel({
     }
   }, [entries.length]);
 
+  useEffect(() => {
+    if (selectedLine !== null && scrollRef.current) {
+      const selectedEl = scrollRef.current.querySelector('.tape-entry-block--selected, .tape-entry-row--selected');
+      if (selectedEl) {
+        selectedEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  }, [selectedLine]);
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
+      if (entries.length === 0) return;
+
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (selectedLine === null) {
+          setSelectedLine(entries[entries.length - 1].line_number);
+          return;
+        }
+        const idx = entries.findIndex(en => en.line_number === selectedLine);
+        if (idx > 0) setSelectedLine(entries[idx - 1].line_number);
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (selectedLine === null) return;
+        const idx = entries.findIndex(en => en.line_number === selectedLine);
+        if (idx !== -1 && idx < entries.length - 1) setSelectedLine(entries[idx + 1].line_number);
+      } else if (e.key === "Enter") {
+        if (selectedLine !== null) {
+          e.preventDefault();
+          const entry = entries.find(en => en.line_number === selectedLine);
+          if (entry) {
+            setEditingEntryLine(selectedLine);
+            setEditingEntryText(entry.input);
+          }
+        }
+      } else if (e.key === "s" || e.key === "S") {
+        if (selectedLine !== null) {
+          e.preventDefault();
+          onToggleSubtotal(selectedLine);
+        }
+      }
+    };
+    
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [entries, selectedLine, onToggleSubtotal]);
+
   const handleEntryClick = (lineNumber: number) => {
     setSelectedLine(lineNumber === selectedLine ? null : lineNumber);
     onEntryClick(lineNumber);
@@ -163,20 +291,30 @@ export const TapePanel = memo(function TapePanel({
     showToast("Entry deleted", "info");
   };
 
-  const startEditingNote = (lineNumber: number, e: React.MouseEvent) => {
+  const startEditingNote = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setEditingNoteFor(lineNumber);
+    setEditingNoteForId(id);
     // Focus after render
     setTimeout(() => noteInputRef.current?.focus(), 0);
   };
 
-  const commitNote = (lineNumber: number, value: string) => {
-    onSetNote(lineNumber, value.trim());
-    setEditingNoteFor(null);
+  const commitNote = (id: string, value: string) => {
+    const parts = id.split("-");
+    const isPending = parts[0] === "pending";
+    const lineNum = isPending ? 0 : parseInt(parts[0], 10);
+    const type = parts[1]; // "result" or "op"
+    const opIdx = type === "op" ? parseInt(parts[2], 10) : undefined;
+
+    if (isPending) {
+      onSetPendingNote?.(value.trim(), opIdx);
+    } else {
+      onSetNote(lineNum, value.trim(), opIdx);
+    }
+    setEditingNoteForId(null);
   };
 
   const cancelEditing = () => {
-    setEditingNoteFor(null);
+    setEditingNoteForId(null);
   };
 
   return (
@@ -327,7 +465,7 @@ export const TapePanel = memo(function TapePanel({
 
       {/* Tape entries — CalcTape-style layout */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto tape-dots-bg" style={{ padding: "4px 0" }}>
-        {entries.length === 0 && (
+        {entries.length === 0 && !(pendingInput && pendingInput.trim() !== "0") && (
           /* P1-9: Rich empty state with example tape visual */
           <div className="empty-state" style={{ minHeight: 200, gap: "var(--space-lg)" }}>
             <Calculator size={32} className="empty-state__icon" style={{ opacity: 0.2 }} />
@@ -396,7 +534,59 @@ export const TapePanel = memo(function TapePanel({
         {entries.map((entry, idx) => {
           const isSelected = selectedLine === entry.line_number;
           const isNewest = entry.line_number === newestLineNumber.current;
-          const operands = parseExpressionToOperands(entry.input);
+          let operands = parseExpressionToOperands(entry.input);
+          
+          // P3-Magical Note Parsing Fallback: User might evaluate "8*(9-6)" manually,
+          // type "24", and put "8x(9-6)" as a note, expecting it to expand on the tape.
+          if (!operands && entry.note) {
+            const noteOperands = parseExpressionToOperands(entry.note);
+            if (noteOperands && noteOperands.length >= 2) {
+              operands = noteOperands;
+            }
+          }
+
+          if (editingEntryLine === entry.line_number) {
+            return (
+              <div key={`${entry.line_number}-${idx}`} className="tape-entry-block tape-entry-block--selected tape-flash-update">
+                <div className="tape-entry-row tape-entry-row--selected">
+                  <span className="tape-op"></span>
+                  <input
+                    ref={inputEditRef}
+                    className="tape-value font-bold"
+                    style={{ 
+                      width: "100%",
+                      background: "transparent",
+                      border: "none",
+                      outline: "1px solid var(--accent-primary)",
+                      borderRadius: "var(--radius-sm)",
+                      padding: "2px 8px",
+                      marginLeft: "-8px", /* offset padding visually */
+                    }}
+                    value={editingEntryText}
+                    onChange={(e) => setEditingEntryText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        onEditEntry(entry.line_number, editingEntryText);
+                        setEditingEntryLine(null);
+                      } else if (e.key === "Escape") {
+                        isCancelingEdit.current = true;
+                        setEditingEntryLine(null);
+                      }
+                    }}
+                    onBlur={() => {
+                      if (!isCancelingEdit.current) {
+                        onEditEntry(entry.line_number, editingEntryText);
+                      }
+                      isCancelingEdit.current = false;
+                      setEditingEntryLine(null);
+                    }}
+                    autoFocus
+                  />
+                  <span className="tape-note tape-note--placeholder">editing...</span>
+                </div>
+              </div>
+            );
+          }
 
           // Result value class
           let resultClass = "tape-value tape-value--result";
@@ -410,6 +600,10 @@ export const TapePanel = memo(function TapePanel({
                 key={`${entry.line_number}-${idx}`}
                 className={`tape-entry-block ${isNewest ? "animate-fade-in" : ""} ${isSelected ? "tape-entry-block--selected" : ""}`}
                 onClick={() => handleEntryClick(entry.line_number)}
+                onDoubleClick={() => {
+                  setEditingEntryLine(entry.line_number);
+                  setEditingEntryText(entry.input);
+                }}
                 title={entry.input}
                 style={{
                   borderLeft: `3px solid ${isSelected ? 'var(--accent-primary)' : (
@@ -419,9 +613,59 @@ export const TapePanel = memo(function TapePanel({
                   )}`,
                 }}
               >
-                {/* Individual operand rows */}
+                {/* Individual operand rows — with recursive sub-expression expansion */}
                 {operands.map((operand, oi) => {
                   const isSubtract = operand.op === "−";
+                  const noteId = `${entry.line_number}-op-${oi}`;
+                  const isEditingThis = editingNoteForId === noteId;
+                  const noteVal = entry.operand_notes?.[oi] || "";
+                  const hasChildren = operand.children && operand.children.length > 0;
+
+                  // Render sub-expression children (bracket group expanded)
+                  if (hasChildren) {
+                    return (
+                      <div key={oi} className="tape-subexpr-group">
+                        {operand.children!.map((child, ci) => (
+                          <div key={ci} className="tape-entry-row tape-entry-row--operand tape-entry-row--nested">
+                            <span className={`tape-op ${ci === 0 ? (oi === 0 ? "tape-op--add" : operand.opClass) : child.opClass}`}>
+                              {ci === 0 ? (oi === 0 ? "" : operand.op) : child.op}
+                            </span>
+                            <span className={`tape-value ${child.op === "−" && ci > 0 ? "tape-value--neg" : ""}`}>
+                              {formatTapeValue(child.value)}
+                            </span>
+                            {ci === 0 ? (
+                              isEditingThis ? (
+                                <input
+                                  ref={noteInputRef}
+                                  className="tape-note-input"
+                                  defaultValue={noteVal}
+                                  placeholder="Add note…"
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") commitNote(noteId, (e.target as HTMLInputElement).value);
+                                    if (e.key === "Escape") cancelEditing();
+                                  }}
+                                  onBlur={(e) => commitNote(noteId, e.target.value)}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              ) : (
+                                <span
+                                  className={`tape-note tape-note--clickable ${!noteVal ? "tape-note--placeholder" : ""}`}
+                                  onClick={(e) => startEditingNote(noteId, e)}
+                                  title="Click to add note"
+                                >
+                                  {noteVal || operand.value}
+                                </span>
+                              )
+                            ) : (
+                              <span className="tape-note tape-note--placeholder" />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }
+
+                  // Normal numeric operand
                   return (
                     <div key={oi} className="tape-entry-row tape-entry-row--operand">
                       <span className={`tape-op ${oi === 0 ? "tape-op--add" : operand.opClass}`}>
@@ -430,6 +674,28 @@ export const TapePanel = memo(function TapePanel({
                       <span className={`tape-value ${isSubtract && oi > 0 ? "tape-value--neg" : ""}`}>
                         {formatTapeValue(operand.value)}
                       </span>
+                      {isEditingThis ? (
+                        <input
+                          ref={noteInputRef}
+                          className="tape-note-input"
+                          defaultValue={noteVal}
+                          placeholder="Add note…"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") commitNote(noteId, (e.target as HTMLInputElement).value);
+                            if (e.key === "Escape") cancelEditing();
+                          }}
+                          onBlur={(e) => commitNote(noteId, e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <span
+                          className={`tape-note tape-note--clickable ${!noteVal ? "tape-note--placeholder" : ""}`}
+                          onClick={(e) => startEditingNote(noteId, e)}
+                          title="Click to add note"
+                        >
+                          {noteVal || "+ Add note"}
+                        </span>
+                      )}
                     </div>
                   );
                 })}
@@ -441,23 +707,23 @@ export const TapePanel = memo(function TapePanel({
                 <div className="tape-entry-row tape-entry-row--result">
                   <span className="tape-op tape-op--add"></span>
                   <span className={resultClass}>{formatTapeValue(entry.result)}</span>
-                  {editingNoteFor === entry.line_number ? (
+                  {editingNoteForId === `${entry.line_number}-result` ? (
                     <input
                       ref={noteInputRef}
                       className="tape-note-input"
                       defaultValue={entry.note}
                       placeholder="Add note…"
                       onKeyDown={(e) => {
-                        if (e.key === "Enter") commitNote(entry.line_number, (e.target as HTMLInputElement).value);
+                        if (e.key === "Enter") commitNote(`${entry.line_number}-result`, (e.target as HTMLInputElement).value);
                         if (e.key === "Escape") cancelEditing();
                       }}
-                      onBlur={(e) => commitNote(entry.line_number, e.target.value)}
+                      onBlur={(e) => commitNote(`${entry.line_number}-result`, e.target.value)}
                       onClick={(e) => e.stopPropagation()}
                     />
                   ) : (
                     <span
                       className={`tape-note tape-note--clickable ${!entry.note ? "tape-note--placeholder" : ""}`}
-                      onClick={(e) => startEditingNote(entry.line_number, e)}
+                      onClick={(e) => startEditingNote(`${entry.line_number}-result`, e)}
                       title="Click to add note"
                     >
                       {entry.note || "+ Add note"}
@@ -472,6 +738,9 @@ export const TapePanel = memo(function TapePanel({
                     </button>
                   </div>
                 </div>
+                {entry.is_subtotal && (
+                  <div style={{ height: 2, background: "var(--accent-primary)", margin: "4px 12px 0 12px", opacity: 0.8 }} />
+                )}
               </div>
             );
           }
@@ -489,6 +758,10 @@ export const TapePanel = memo(function TapePanel({
               <div
               className={`tape-entry-row ${isNewest ? "animate-fade-in" : ""} ${isSelected ? "tape-entry-row--selected" : ""}`}
                 onClick={() => handleEntryClick(entry.line_number)}
+                onDoubleClick={() => {
+                  setEditingEntryLine(entry.line_number);
+                  setEditingEntryText(entry.input);
+                }}
                 title={entry.input}
                 style={{
                   borderLeft: `3px solid ${isSelected ? 'var(--accent-primary)' : (
@@ -500,23 +773,23 @@ export const TapePanel = memo(function TapePanel({
               >
                 <span className={`tape-op ${opClass}`}>{op}</span>
                 <span className={valueClass}>{formatTapeValue(entry.result)}</span>
-                {editingNoteFor === entry.line_number ? (
+                {editingNoteForId === `${entry.line_number}-result` ? (
                   <input
                     ref={noteInputRef}
                     className="tape-note-input"
                     defaultValue={entry.note}
                     placeholder="Add note…"
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") commitNote(entry.line_number, (e.target as HTMLInputElement).value);
+                      if (e.key === "Enter") commitNote(`${entry.line_number}-result`, (e.target as HTMLInputElement).value);
                       if (e.key === "Escape") cancelEditing();
                     }}
-                    onBlur={(e) => commitNote(entry.line_number, e.target.value)}
+                    onBlur={(e) => commitNote(`${entry.line_number}-result`, e.target.value)}
                     onClick={(e) => e.stopPropagation()}
                   />
                 ) : (
                   <span
                     className={`tape-note tape-note--clickable ${entry.note ? "" : "tape-note--placeholder"}`}
-                    onClick={(e) => startEditingNote(entry.line_number, e)}
+                    onClick={(e) => startEditingNote(`${entry.line_number}-result`, e)}
                     title={entry.note ? "Click to edit note" : "Click to add note"}
                   >
                     {entry.note || entry.input}
@@ -531,9 +804,172 @@ export const TapePanel = memo(function TapePanel({
                   </button>
                 </div>
               </div>
+              {entry.is_subtotal && (
+                <div style={{ height: 2, background: "var(--accent-primary)", margin: "4px 12px 0 12px", opacity: 0.8 }} />
+              )}
             </div>
           );
         })}
+
+        {/* ── Virtual Pending Entry ── */}
+        {pendingInput && pendingInput.trim() !== "0" && pendingInput !== pendingResult
+          && !(entries.length > 0 && entries[entries.length - 1].input === pendingInput)
+          && (
+          pendingInput && (parseExpressionToOperands(pendingInput) ? (
+            <div
+              className={`tape-entry-block opacity-60`}
+              title="Current calculation"
+              style={{
+                borderLeft: `3px solid var(--accent-primary)`,
+              }}
+            >
+              {parseExpressionToOperands(pendingInput)!.map((operand, oi) => {
+                const isSubtract = operand.op === "−";
+                const noteId = `pending-op-${oi}`;
+                const isEditingThis = editingNoteForId === noteId;
+                const noteVal = pendingOperandNotes?.[oi] || "";
+                const hasChildren = operand.children && operand.children.length > 0;
+
+                if (hasChildren) {
+                  return (
+                    <div key={oi} className="tape-subexpr-group">
+                      {operand.children!.map((child, ci) => (
+                        <div key={ci} className="tape-entry-row tape-entry-row--operand tape-entry-row--nested">
+                          <span className={`tape-op ${ci === 0 ? (oi === 0 ? "tape-op--add" : operand.opClass) : child.opClass}`}>
+                            {ci === 0 ? (oi === 0 ? "" : operand.op) : child.op}
+                          </span>
+                          <span className={`tape-value ${child.op === "−" && ci > 0 ? "tape-value--neg" : ""}`}>
+                            {formatTapeValue(child.value)}
+                          </span>
+                          {ci === 0 ? (
+                            isEditingThis ? (
+                              <input
+                                ref={noteInputRef}
+                                className="tape-note-input"
+                                defaultValue={noteVal}
+                                placeholder="Add note…"
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") commitNote(noteId, (e.target as HTMLInputElement).value);
+                                  if (e.key === "Escape") cancelEditing();
+                                }}
+                                onBlur={(e) => commitNote(noteId, e.target.value)}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            ) : (
+                              <span
+                                className={`tape-note tape-note--clickable ${!noteVal ? "tape-note--placeholder" : ""}`}
+                                onClick={(e) => startEditingNote(noteId, e)}
+                                title="Click to add note"
+                              >
+                                {noteVal || operand.value}
+                              </span>
+                            )
+                          ) : (
+                            <span className="tape-note tape-note--placeholder" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={oi} className="tape-entry-row tape-entry-row--operand">
+                    <span className={`tape-op ${oi === 0 ? "tape-op--add" : operand.opClass}`}>
+                      {oi === 0 ? "" : operand.op}
+                    </span>
+                    <span className={`tape-value ${isSubtract && oi > 0 ? "tape-value--neg" : ""}`}>
+                      {formatTapeValue(operand.value)}
+                    </span>
+                    {isEditingThis ? (
+                      <input
+                        ref={noteInputRef}
+                        className="tape-note-input"
+                        defaultValue={noteVal}
+                        placeholder="Add note…"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") commitNote(noteId, (e.target as HTMLInputElement).value);
+                          if (e.key === "Escape") cancelEditing();
+                        }}
+                        onBlur={(e) => commitNote(noteId, e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    ) : (
+                      <span
+                        className={`tape-note tape-note--clickable ${!noteVal ? "tape-note--placeholder" : ""}`}
+                        onClick={(e) => startEditingNote(noteId, e)}
+                        title="Click to add note"
+                      >
+                        {noteVal || "+ Add note"}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+              <hr className="tape-subtotal-sep" />
+              <div className="tape-entry-row tape-entry-row--result">
+                <span className="tape-op tape-op--add"></span>
+                <span className="tape-value tape-value--result text-dim">{formatTapeValue(pendingResult || "")}</span>
+                {editingNoteForId === "pending-result" ? (
+                  <input
+                    ref={noteInputRef}
+                    className="tape-note-input"
+                    defaultValue={pendingResultNote || ""}
+                    placeholder="Add note…"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") commitNote("pending-result", (e.target as HTMLInputElement).value);
+                      if (e.key === "Escape") cancelEditing();
+                    }}
+                    onBlur={(e) => commitNote("pending-result", e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <span
+                    className={`tape-note tape-note--clickable ${!pendingResultNote ? "tape-note--placeholder" : ""}`}
+                    onClick={(e) => startEditingNote("pending-result", e)}
+                    title="Click to add note"
+                  >
+                    {pendingResultNote || "+ Add note"}
+                  </span>
+                )}
+                <div className="tape-action-icons"></div>
+              </div>
+            </div>
+          ) : (
+            <div className="tape-entry-block opacity-60">
+              <div
+                className="tape-entry-row"
+                style={{ borderLeft: `3px solid var(--accent-primary)` }}
+              >
+                <span className="tape-op tape-op--add">{parseOperator(pendingInput).op}</span>
+                <span className="tape-value text-dim">{formatTapeValue(pendingResult || pendingInput)}</span>
+                {editingNoteForId === "pending-result" ? (
+                  <input
+                    ref={noteInputRef}
+                    className="tape-note-input"
+                    defaultValue={pendingResultNote || ""}
+                    placeholder="Add note…"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") commitNote("pending-result", (e.target as HTMLInputElement).value);
+                      if (e.key === "Escape") cancelEditing();
+                    }}
+                    onBlur={(e) => commitNote("pending-result", e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <span
+                    className={`tape-note tape-note--clickable ${!pendingResultNote ? "tape-note--placeholder" : ""}`}
+                    onClick={(e) => startEditingNote("pending-result", e)}
+                    title="Click to add note"
+                  >
+                    {pendingResultNote || pendingInput || "+ Add note"}
+                  </span>
+                )}
+                <div className="tape-action-icons"></div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Grand total */}

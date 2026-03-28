@@ -22,6 +22,8 @@ export interface TapeEntryDto {
   result: string;
   is_error: boolean;
   note: string;
+  is_subtotal?: boolean;
+  operand_notes: Record<number, string>;
 }
 
 export interface TapeState {
@@ -42,4 +44,6 @@ export interface CalcDisplay {
   tape_count: number;
   active_tape_index: number;
   tape_names: string[];
+  pending_result_note?: string;
+  pending_operand_notes: Record<number, string>;
 }

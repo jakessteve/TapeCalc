@@ -1,37 +1,32 @@
 # Architecture Overview
 
 ## Project Type
-Vite 7 + React 19 + TypeScript SPA (monorepo with `packages/` workspace).
+_[e.g., Web SPA, Desktop application, Mobile app, CLI tool, Library/SDK]_
 
 ## Directory Structure
-
 ```
-src/
-├── components/        # Shared UI components
-├── pages/             # Route-level page components
-├── services/          # Domain engines
-│   ├── tuvi/          # Tử Vi (Eastern Astrology) — iztro-based
-│   ├── chiemtinh/     # Chiêm Tinh (Western Astrology)
-│   └── maiHoa/        # Mai Hoa Dịch Số (Plum Blossom Numerology)
-├── utils/             # Core calculation utilities
-│   ├── lunar/         # Lunar calendar calculations
-│   ├── astronomy/     # Astronomical computations
-│   └── scoring/       # Activity scoring (Dụng Sự)
-├── stores/            # Zustand state management
-└── index.css          # TailwindCSS v4 @theme tokens
-packages/              # Shared packages (future: core-engine extraction)
+[project root]/
+├── [source directory]/    # Application source code
+│   ├── [subsystem 1]/
+│   ├── [subsystem 2]/
+│   └── ...
+├── [tests directory]/     # Test files
+├── [build directory]/     # Build output
+└── [docs directory]/      # Documentation
 ```
 
 ## Tech Stack
-- **Runtime:** Node.js 20+, pnpm
-- **Framework:** React 19, React Router 7, Vite 7
-- **Language:** TypeScript (Strict, no `any`)
-- **Styling:** TailwindCSS v4 with custom `@theme` tokens, dark mode mandatory
-- **State:** Zustand
-- **Testing:** Jest + Testing Library (unit), Vitest (integration)
+- **Language:** _[Primary language and version]_
+- **Framework:** _[Application framework, if any]_
+- **Build System:** _[Build tool / package manager]_
+- **Testing:** _[Test framework(s)]_
+- **Styling:** _[UI styling approach, if applicable]_
 
 ## Key Architectural Decisions
-1. **No Backend API** — All computation is client-side via domain engine libraries
-2. **TypeScript interfaces as contracts** — See `API_CONTRACTS.md`
-3. **Mobile-first design** — 375px baseline, responsive scaling
-4. **Academic accuracy** — Astrology engines follow established Tam Hợp and Tứ Hóa school traditions
+1. _[Decision 1 — e.g., monolith vs. microservices, client-side vs. server-side]_
+2. _[Decision 2 — e.g., data flow pattern, state management approach]_
+3. _[Decision 3 — e.g., deployment model, scalability strategy]_
+
+---
+
+> **Note:** Update this document whenever the architecture changes. All agents reference this as the Source of Truth for project structure.

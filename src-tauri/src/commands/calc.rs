@@ -192,9 +192,15 @@ pub fn button_press(key: String, state: State<'_, Mutex<AppState>>) -> Result<Ca
                     calc.eval_context.last_answer = Some(*v);
                 }
 
+                // Move pending notes to the new tape entry
+                let note = calc.pending_result_note.take();
+                let operand_notes = std::mem::take(&mut calc.pending_operand_notes);
+
                 // Add to tape
                 let cmd = TapeCommand::AddEntry {
                     input: display_expr,
+                    note,
+                    operand_notes,
                 };
                 undo_stack.execute(cmd, tape);
 

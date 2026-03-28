@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import {
   Calculator,
   Settings,
@@ -9,6 +9,8 @@ import {
   DollarSign,
   FunctionSquare,
   LineChart,
+  Pin,
+  Printer,
 } from "lucide-react";
 import tapcalcLogo from "../assets/tapcalc-logo.png";
 import { Theme } from "../types";
@@ -20,6 +22,7 @@ interface HeaderProps {
   showLabs?: boolean;
   onCycleTheme: () => void;
   onTabChange: (tab: number) => void;
+  onToggleAlwaysOnTop?: (enable: boolean) => void;
 }
 
 const MAIN_TABS = [
@@ -39,7 +42,16 @@ export const Header = memo(function Header({
   showLabs,
   onCycleTheme,
   onTabChange,
+  onToggleAlwaysOnTop,
 }: HeaderProps) {
+  const [isPinned, setIsPinned] = useState(false);
+
+  const handlePinToggle = () => {
+    const next = !isPinned;
+    setIsPinned(next);
+    onToggleAlwaysOnTop?.(next);
+  };
+
   const themeIcon =
     themeName === "Professional Dark" ? (
       <Moon size={14} />
@@ -71,6 +83,29 @@ export const Header = memo(function Header({
         </span>
 
         <div className="flex-1" />
+
+        {/* Action icons */}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={handlePinToggle}
+            className={`action-btn focus-ring ${isPinned ? "text-primary" : "text-dim"}`}
+            title="Toggle Always On Top"
+            aria-label="Pin window on top"
+          >
+            <Pin size={14} className={isPinned ? "fill-current" : ""} />
+          </button>
+
+          <button
+            onClick={() => {
+              window.print();
+            }}
+            className="action-btn focus-ring text-dim"
+            title="Print Tape"
+            aria-label="Print tape or save as PDF"
+          >
+            <Printer size={14} />
+          </button>
+        </div>
 
         {/* Theme toggle — P1-1: aria-label */}
         <button

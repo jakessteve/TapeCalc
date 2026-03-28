@@ -17,6 +17,9 @@ pub struct TapeEntry {
     pub result: CalcResult,
     /// Optional text note/label for this entry.
     pub note: Option<String>,
+    /// Notes attached to individual operands (by index).
+    #[serde(default)]
+    pub operand_notes: std::collections::HashMap<usize, String>,
     /// Whether this entry is a subtotal marker.
     pub is_subtotal: bool,
     /// Line number (1-indexed, auto-assigned).
@@ -62,6 +65,7 @@ impl Tape {
             input,
             result: CalcResult::Pending,
             note: None,
+            operand_notes: std::collections::HashMap::new(),
             is_subtotal: false,
             line_number,
         };
@@ -82,13 +86,14 @@ impl Tape {
 
     /// Compute the grand total of all numeric results.
     pub fn grand_total(&self) -> f64 {
-        self.entries
-            .iter()
-            .filter_map(|e| match &e.result {
-                CalcResult::Numeric(val) => Some(*val),
-                _ => None,
-            })
-            .sum()
+        for entry in self.entries.iter().rev() {
+            if !entry.is_subtotal {
+                if let CalcResult::Numeric(val) = &entry.result {
+                    return *val;
+                }
+            }
+        }
+        0.0
     }
 
     /// Get the number of entries.

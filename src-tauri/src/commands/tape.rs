@@ -3,7 +3,7 @@
 use hc_tapcalc_core::tape::Tape;
 use hc_tapcalc_core::undo::UndoStack;
 use std::sync::Mutex;
-use tauri::State;
+use tauri::{State, Window};
 
 use super::helpers::{build_display, sanitize_string, save_all_tapes};
 use super::state::AppState;
@@ -16,10 +16,11 @@ pub fn undo(state: State<'_, Mutex<AppState>>) -> Result<CalcDisplay, String> {
     {
         let active = state.active_tape;
         let AppState {
-            tapes, undo_stack, ..
+            tapes, undo_stack, calc, ..
         } = &mut *state;
         let tape = &mut tapes[active];
         undo_stack.undo(tape);
+        super::helpers::recalculate_tape(tape, calc);
     }
     save_all_tapes(&state.tapes, state.active_tape);
     state.mark_tape_dirty();
@@ -33,10 +34,11 @@ pub fn redo(state: State<'_, Mutex<AppState>>) -> Result<CalcDisplay, String> {
     {
         let active = state.active_tape;
         let AppState {
-            tapes, undo_stack, ..
+            tapes, undo_stack, calc, ..
         } = &mut *state;
         let tape = &mut tapes[active];
         undo_stack.redo(tape);
+        super::helpers::recalculate_tape(tape, calc);
     }
     save_all_tapes(&state.tapes, state.active_tape);
     state.mark_tape_dirty();
@@ -65,11 +67,15 @@ pub fn delete_entry(
     let mut state = state.lock().map_err(|e| format!("State lock error: {e}"))?;
     {
         let active = state.active_tape;
-        let tape = &mut state.tapes[active];
+        let AppState {
+            tapes, calc, ..
+        } = &mut *state;
+        let tape = &mut tapes[active];
         tape.entries.retain(|e| e.line_number != line_number);
         for (i, entry) in tape.entries.iter_mut().enumerate() {
             entry.line_number = i as u32 + 1;
         }
+        super::helpers::recalculate_tape(tape, calc);
         tape.is_dirty = true;
     }
     save_all_tapes(&state.tapes, state.active_tape);
@@ -154,6 +160,7 @@ pub fn switch_tape(index: usize, state: State<'_, Mutex<AppState>>) -> Result<Ca
 pub fn set_note(
     line_number: u32,
     note: String,
+    operand_index: Option<usize>,
     state: State<'_, Mutex<AppState>>,
 ) -> Result<CalcDisplay, String> {
     let mut state = state.lock().map_err(|e| format!("State lock error: {e}"))?;
@@ -166,15 +173,51 @@ pub fn set_note(
             .iter_mut()
             .find(|e| e.line_number == line_number)
         {
-            entry.note = if sanitized.is_empty() {
-                None
+            if let Some(idx) = operand_index {
+                if sanitized.is_empty() {
+                    entry.operand_notes.remove(&idx);
+                } else {
+                    entry.operand_notes.insert(idx, sanitized);
+                }
             } else {
-                Some(sanitized)
-            };
+                entry.note = if sanitized.is_empty() {
+                    None
+                } else {
+                    Some(sanitized)
+                };
+            }
         }
     }
     save_all_tapes(&state.tapes, state.active_tape);
     state.mark_tape_dirty();
+    Ok(build_display(&mut state))
+}
+
+/// Set a note on the pending virtual tape entry
+#[tauri::command]
+pub fn set_pending_note(
+    note: String,
+    operand_index: Option<usize>,
+    state: State<'_, Mutex<AppState>>,
+) -> Result<CalcDisplay, String> {
+    let mut state = state.lock().map_err(|e| format!("State lock error: {e}"))?;
+    let sanitized = sanitize_string(&note, 500);
+    
+    if let Some(idx) = operand_index {
+        if sanitized.is_empty() {
+            state.calc.pending_operand_notes.remove(&idx);
+        } else {
+            state.calc.pending_operand_notes.insert(idx, sanitized);
+        }
+    } else {
+        state.calc.pending_result_note = if sanitized.is_empty() {
+            None
+        } else {
+            Some(sanitized)
+        };
+    }
+    
+    // Virtual entry doesn't strictly need tape_dirty, but re-rendering display will pass the updated notes
     Ok(build_display(&mut state))
 }
 
@@ -214,4 +257,59 @@ pub fn delete_tape(index: usize, state: State<'_, Mutex<AppState>>) -> Result<Ca
     state.undo_stack = UndoStack::new();
     state.mark_tape_dirty();
     Ok(build_display(&mut state))
+}
+
+/// Edit an existing tape entry and recalculate subsequent entries.
+#[tauri::command]
+pub fn edit_entry(
+    line_number: u32,
+    new_input: String,
+    state: State<'_, Mutex<AppState>>,
+) -> Result<CalcDisplay, String> {
+    let mut state = state.lock().map_err(|e| format!("State lock error: {e}"))?;
+    {
+        let active = state.active_tape;
+        let AppState {
+            tapes, calc, ..
+        } = &mut *state;
+        let tape = &mut tapes[active];
+        if let Some(entry) = tape.entries.iter_mut().find(|e| e.line_number == line_number) {
+            entry.input = new_input;
+            tape.is_dirty = true;
+        }
+        super::helpers::recalculate_tape(tape, calc);
+    }
+    save_all_tapes(&state.tapes, state.active_tape);
+    state.mark_tape_dirty();
+    Ok(build_display(&mut state))
+}
+
+/// Toggle subtotal mode for a tape entry.
+#[tauri::command]
+pub fn toggle_subtotal(
+    line_number: u32,
+    state: State<'_, Mutex<AppState>>,
+) -> Result<CalcDisplay, String> {
+    let mut state = state.lock().map_err(|e| format!("State lock error: {e}"))?;
+    {
+        let active = state.active_tape;
+        let AppState {
+            tapes, calc, ..
+        } = &mut *state;
+        let tape = &mut tapes[active];
+        if let Some(entry) = tape.entries.iter_mut().find(|e| e.line_number == line_number) {
+            entry.is_subtotal = !entry.is_subtotal;
+            tape.is_dirty = true;
+        }
+        super::helpers::recalculate_tape(tape, calc);
+    }
+    save_all_tapes(&state.tapes, state.active_tape);
+    state.mark_tape_dirty();
+    Ok(build_display(&mut state))
+}
+
+/// Toggle always-on-top window property.
+#[tauri::command]
+pub fn toggle_always_on_top(enable: bool, window: Window) -> Result<(), String> {
+    window.set_always_on_top(enable).map_err(|e| e.to_string())
 }

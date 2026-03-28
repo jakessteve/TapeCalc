@@ -4,35 +4,34 @@
 
 | Environment | URL | Purpose | Deploy Method |
 |-------------|-----|---------|---------------|
-| Development | `localhost:5173` | Local dev | `npm run dev` |
-| Staging | TBD | Pre-release QA | Manual / CI |
-| Production | TBD | Public release | CI/CD pipeline |
+| Development | _[local dev URL]_ | Local dev | _[dev command]_ |
+| Staging | _[staging URL]_ | Pre-release QA | Manual / CI |
+| Production | _[production URL]_ | Public release | CI/CD pipeline |
 
 ## Build Process
 
 ### Prerequisites
-- Node.js 20+
-- npm 10+
+- _[Runtime/toolchain and version]_
+- _[Package manager and version, if applicable]_
 
 ### Build Commands
-```bash
-npm install          # Install dependencies
-npm run build        # Production build
-npm run preview      # Preview production build locally
+```
+[install command]       # Install dependencies
+[build command]         # Production build
+[preview command]       # Preview production build locally (if applicable)
 ```
 
 ### Build Output
-- Output directory: `dist/`
-- Static assets optimized via Vite
-- Code splitting enabled
+- Output directory: _[build output path]_
+- _[Any optimization notes]_
 
 ## Deployment Checklist
 
 ### Pre-Deploy
-- [ ] All tests pass (`npm run test`)
-- [ ] TypeScript compiles clean (`npx tsc --noEmit`)
-- [ ] Build succeeds (`npm run build`)
-- [ ] Bundle size within performance budget
+- [ ] All tests pass (`[test command]`)
+- [ ] Build/compile clean (`[build/type-check command]`)
+- [ ] Production build succeeds
+- [ ] Binary/bundle size within performance budget
 - [ ] Security scan clean
 
 ### Deploy Steps

@@ -76,7 +76,9 @@ pub fn tape_to_dto(tape: &Tape) -> TapeState {
                 input: e.input.clone(),
                 result: format_result(&e.result),
                 is_error: matches!(e.result, CalcResult::Error(_)),
+                is_subtotal: e.is_subtotal,
                 note: e.note.clone().unwrap_or_default(),
+                operand_notes: e.operand_notes.clone(),
             })
             .collect(),
         grand_total: format_result(&CalcResult::Numeric(tape.grand_total())),
@@ -103,7 +105,11 @@ pub fn build_display(state: &mut AppState) -> CalcDisplay {
     let tape_dto = state.get_tape_dto();
 
     CalcDisplay {
-        input: state.calc.expression.clone(),
+        input: if state.calc.just_evaluated {
+            String::new()
+        } else {
+            state.calc.expression.clone()
+        },
         result: preview,
         has_error: false,
         angle_unit: match state.calc.angle_unit {
@@ -123,6 +129,8 @@ pub fn build_display(state: &mut AppState) -> CalcDisplay {
         tape_count: state.tapes.len(),
         active_tape_index: state.active_tape,
         tape_names: state.tapes.iter().map(|t| t.name.clone()).collect(),
+        pending_result_note: state.calc.pending_result_note.clone(),
+        pending_operand_notes: state.calc.pending_operand_notes.clone(),
     }
 }
 
@@ -137,6 +145,46 @@ pub fn sanitize_string(input: &str, max_len: usize) -> String {
         .collect::<String>()
         .trim()
         .to_string()
+}
+
+pub fn prepare_eval_string(s: &str) -> String {
+    s.replace('×', "*")
+        .replace('÷', "/")
+        .replace('−', "-")
+}
+
+/// P1-2: Recalculate the entire tape from index 0 to the end.
+/// Subtotals sum all previous entries since the last subtotal or start.
+/// Starts with an operator? Prepend the previous result.
+pub fn recalculate_tape(tape: &mut Tape, calc: &super::state::CalcState) {
+    use super::state::resolve_refs;
+    let mut prev_result = 0.0;
+    
+    // We need to collect results to resolve line references correctly
+    for i in 0..tape.entries.len() {
+        if tape.entries[i].is_subtotal {
+            tape.entries[i].result = CalcResult::Numeric(prev_result);
+            continue;
+        }
+
+        let input = tape.entries[i].input.trim();
+        let mut eval_str = prepare_eval_string(input);
+        
+        if eval_str.starts_with(|c| "+-*/".contains(c)) {
+            eval_str = format!("({}){}", prev_result, eval_str);
+        } else {
+            eval_str = format!("({})+{}", prev_result, eval_str);
+        }
+        
+        let resolved = resolve_refs(&eval_str, tape);
+        let result = eval_numeric_ctx(&resolved, &calc.eval_context);
+        
+        if let CalcResult::Numeric(v) = &result {
+            prev_result = *v;
+        }
+        
+        tape.entries[i].result = result;
+    }
 }
 
 // ─── Persistence ─────────────────────────────────────────────────────────────

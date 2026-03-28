@@ -1,19 +1,17 @@
-# Product Brief — Lịch Việt v2
-
-> **Note:** This is a bootstrap stub. For full product requirements, see [`PRD.md`](./PRD.md).
+# Product Brief
 
 ## One-Liner
-All-in-one Vietnamese metaphysics platform — Lunar Calendar, Tử Vi, Chiêm Tinh, Mai Hoa, and daily Phong Thủy guidance.
+_[Single sentence describing what the product does]_
 
 ## Target Audience
-Vietnamese-speaking users seeking traditional calendar and astrology features with modern, premium UX.
+_[Who will use this product and why]_
 
 ## Key Differentiators
-1. **Academic accuracy** — engines follow established Tam Hợp, Tứ Hóa, and Huyền Không school traditions
-2. **Comprehensive coverage** — 11 astrology/divination engines in one app
-3. **Mobile-first premium design** — dark mode, glassmorphism, micro-animations
+1. _[What makes this product unique vs. alternatives]_
+2. _[Core competitive advantage]_
+3. _[Technical or UX edge]_
 
 ## Core References
 - Full requirements: [`PRD.md`](./PRD.md)
-- Architecture: [`ARCHITECTURE.md`](./ARCHITECTURE.md)
-- API contracts: [`API_CONTRACTS.md`](./API_CONTRACTS.md)
+- Architecture: [`ARCHITECTURE.md`](../tech/ARCHITECTURE.md)
+- API contracts: [`API_CONTRACTS.md`](../tech/API_CONTRACTS.md)

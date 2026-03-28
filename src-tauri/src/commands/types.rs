@@ -10,7 +10,10 @@ pub struct TapeEntryDto {
     pub input: String,
     pub result: String,
     pub is_error: bool,
+    pub is_subtotal: bool,
     pub note: String,
+    #[serde(default)]
+    pub operand_notes: std::collections::HashMap<usize, String>,
 }
 
 #[derive(Serialize, Clone)]
@@ -33,6 +36,9 @@ pub struct CalcDisplay {
     pub tape_count: usize,
     pub active_tape_index: usize,
     pub tape_names: Vec<String>,
+    pub pending_result_note: Option<String>,
+    #[serde(default)]
+    pub pending_operand_notes: std::collections::HashMap<usize, String>,
 }
 
 // ─── Unit Conversion DTOs ────────────────────────────────────────────────────

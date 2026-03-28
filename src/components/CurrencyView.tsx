@@ -5,7 +5,7 @@ import { useSettings } from "../hooks/useSettings";
 import { CustomSelect, type SelectOption } from "./CustomSelect";
 import { useToast } from "./Toast";
 import { getFlagDisplay } from "../utils/countryCodeToFlag";
-import { invokeApi as invoke } from "../api";
+import { copyTextToClipboard, invokeApi as invoke } from "../api";
 
 const FAVORITES_KEY = "hc-tapcalc-fav-currencies";
 
@@ -152,7 +152,7 @@ export function CurrencyView() {
 
   const handleCopyResult = () => {
     if (result && !error) {
-      navigator.clipboard.writeText(result).then(() => {
+      copyTextToClipboard(result).then(() => {
         showToast(`Copied: ${result} ${toCode}`, "success");
       }).catch(() => {
         showToast("Failed to copy", "error");
