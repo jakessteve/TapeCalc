@@ -87,10 +87,10 @@ impl Tape {
     /// Compute the grand total of all numeric results.
     pub fn grand_total(&self) -> f64 {
         for entry in self.entries.iter().rev() {
-            if !entry.is_subtotal {
-                if let CalcResult::Numeric(val) = &entry.result {
-                    return *val;
-                }
+            if !entry.is_subtotal
+                && let CalcResult::Numeric(val) = &entry.result
+            {
+                return *val;
             }
         }
         0.0
