@@ -58,10 +58,12 @@ pub fn format_with_separators(n: i64) -> String {
         }
         result.push(ch);
     }
+    let formatted: String = result.chars().rev().collect();
     if is_negative {
-        result.push('-');
+        format!("-{formatted}")
+    } else {
+        formatted
     }
-    result.chars().rev().collect()
 }
 
 // ─── Tape DTO Conversion ─────────────────────────────────────────────────────

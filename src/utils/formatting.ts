@@ -78,7 +78,7 @@ export function formatTapeValue(raw: string): string {
  * Used for the calculator display's expression input.
  */
 export function formatInputExpression(expr: string): string {
-  return expr.replace(/(\d[\d,]*\.?\d*)/g, (match) => {
+  return expr.replace(/-?(\d[\d,]*\.?\d*)/g, (match) => {
     const cleaned = match.replace(/,/g, "");
     const num = Number(cleaned);
     if (Number.isNaN(num)) return match;
